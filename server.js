@@ -3,19 +3,48 @@
 var express = require('express'),
     MongoClient = require('mongodb').MongoClient,
     bodyParser = require('body-parser'),
-    assert = require('assert');
+    assert = require('assert'),
+    translator = require('./translator'),
+    request = require('request'),
+    util = require('util'),
+    config = require('./config'),
+    base64 = require('js-base64').Base64;
 
 var db;
 var col;
 
+var app = express();
+app.use(bodyParser.json());
+
+
+/**
+ * Generates a random ID.
+ * @returns A random ID formatted as hexadecimal string.
+ */
 function sid() {
   const UINT32_MAX = 4294967295;
   return (1 + Math.random()*UINT32_MAX).toString(16);
 }
 
-var app = express();
-app.use(bodyParser.json());
+/**
+ * Callback function to perseo HTTP requests
+ * @param {*} error 
+ * @param {*} response 
+ * @param {*} body 
+ */
+function perseoCallback(error, response, body) {
+  if (!error && response.statusCode == 200) {
+    console.log(util.inspect(body, {showHidden: false, depth: null}));
+  } else {
+    if (error) { 
+      console.log(error);
+    }
+  }
+}
 
+//
+// GET handler
+//
 app.get('/v1/flow', function (req, res) {
   col.find({}, {_id: 0}).toArray(function (err, flows) {
     if (err) {
@@ -28,10 +57,24 @@ app.get('/v1/flow', function (req, res) {
   })
 })
 
+
+//
+// POST handler
+//
 app.post('/v1/flow', function (req, res) {
   let flowData = req.body;
+
   if (!flowData) {
     res.status(400).send({msg: "missing flow data"});
+  }
+
+  var flowHeader = { };
+  if ('authorization' in req.headers) {
+    let jwData = base64.decode(req.headers.Authorization.split('.')[1]);
+    flowHeader = { 
+      'Fiware-Service': jwData['service'],
+      'Fiware-ServicePath': '/'
+    }
   }
 
   if ((!('id' in flowData)) || (flowData.id.length == 0)) {
@@ -44,22 +87,54 @@ app.post('/v1/flow', function (req, res) {
 
   flowData.created = Date.now();
   flowData.updated = flowData.created;
+
+  // Translate flow to perseo and/or orion
+  var flowRequests = translator.translateMashup(flowData.flow);
+  // Store perseo data so that the rules can be properly removed in the future
+  flowData['perseoRules'] = {
+    "headers" : {}, // Headers used to create these rules (and so to remove them)
+    "rules" : []    // List of rule identifiers
+  };
+
+  if ("perseoRequests" in flowRequests) {
+    // Send the requests
+    for (var i = 0; i < flowRequests.perseoRequests.length; i++) {
+      let flowRequest = flowRequests.perseoRequests[i];
+      request.post({url: config.perseo_fe.url + "/rules/", json: flowRequest.perseoRequest, headers: flowHeader}, perseoCallback);
+      flowData.perseoRules.rules.push(flowRequest.ruleName);
+    }
+    flowData.perseoRules.headers = flowHeader;
+  }
+
   col.insertOne(flowData, function(err, result) {
     if (err) {
       // TODO handle error
       res.status(500).send({msg: 'failed to retrieve data'});
       throw err;
     }
-
     res.status(200).send({msg: 'flow created'});
   })
 })
 
+//
+// DELETE handler
+//
 app.delete('/v1/flow', function (req, res) {
+  col.find().forEach(function(flowData) {
+    for (var i = 0; i < flowData.perseoRules.rules.length; i++) {
+      let flowId = flowData.perseoRules.rules[i];
+      let flowHeader = flowData.perseoRules.headers;
+      request.delete({url: config.perseo_fe.url + "/rules/" + flowId, headers: flowHeader}, perseoCallback);
+    }
+  });
   col.remove();
   res.status(200).send({msg: 'all flows removed'})
 })
 
+
+//
+// GET handler - single version
+// 
 app.get('/v1/flow/:flowid', function (req, res) {
   col.findOne({id: req.params.flowid}, function(err, flow) {
     if (err) {
@@ -71,11 +146,34 @@ app.get('/v1/flow/:flowid', function (req, res) {
   })
 })
 
+
+//
+// PUT handler - single version
+//
 app.put('/v1/flow/:flowid', function (req, res) {
   res.status(500).send({msg: 'not yet implemented'});
 })
 
+
+//
+// DELETE handler - single version
+//
 app.delete('/v1/flow/:flowid', function (req, res) {
+
+  // Removing related rules
+  col.findOne({id: req.params.flowid}, function(err, flow) {
+    if (err) {
+      res.status(500).send({msg: 'failed to retrieve data'});
+      throw err;
+    }
+
+    for (var i = 0; i < flow.perseoRules.rules.length; i++) {
+      let flowId = flow.perseoRules.rules[i];
+      let flowHeader = flow.perseoRules.headers;
+      request.delete({url: config.perseo_fe.url + "/rules/" + flowId, headers: flowHeader}, perseoCallback);
+    }
+  })
+
   col.remove({id: req.params.flowid}, function(err, nRemoved) {
     if (err) {
       res.status(500).send({msg: 'failed to remove flow'});
@@ -90,8 +188,7 @@ app.delete('/v1/flow/:flowid', function (req, res) {
   })
 })
 
-// TODO read this from configuration file, environment variables
-var url = "mongodb://mongodb:27017/orchestrator";
+var url = config.mongo.url;
 var opt = {
   connectTimeoutMS: 2500,
   reconnectTries: 100,
