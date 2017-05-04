@@ -42,6 +42,22 @@ function perseoCallback(error, response, body) {
   }
 }
 
+/**
+ * Callback function to perseo HTTP requests
+ * @param {*} error 
+ * @param {*} response 
+ * @param {*} body 
+ */
+function orionCallback(error, response, body) {
+  if (!error && response.statusCode == 200) {
+    console.log(util.inspect(body, {showHidden: false, depth: null}));
+  } else {
+    if (error) { 
+      console.log(error);
+    }
+  }
+}
+
 //
 // GET handler
 //
@@ -104,6 +120,14 @@ app.post('/v1/flow', function (req, res) {
       flowData.perseoRules.rules.push(flowRequest.ruleName);
     }
     flowData.perseoRules.headers = flowHeader;
+  }
+
+  if ("orionRequests" in flowRequests) {
+    // Send the requests
+    for (var i = 0; i < flowRequests.orionRequests.length; i++) {
+      let flowRequest = flowRequests.orionRequests[i];
+      request.post({url: config.orion.url + "/updateContext/", json: flowRequest, headers: flowHeader}, orionCallback);
+    }
   }
 
   col.insertOne(flowData, function(err, result) {

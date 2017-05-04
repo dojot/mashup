@@ -10,22 +10,22 @@ var util = require('util');
 var objects = {};
 
 NodeRed = {
-  NodeType : {
-    OUTPUT_DEVICE : 'device in',
-    INPUT_DEVICE : 'device out',
-    SWITCH : 'switch',
-    CHANGE : 'change',
-    HTTP_REQUEST : 'http request',
-    TEMPLATE : 'template'
+  NodeType: {
+    OUTPUT_DEVICE: 'device in',
+    INPUT_DEVICE: 'device out',
+    SWITCH: 'switch',
+    CHANGE: 'change',
+    HTTP_REQUEST: 'http request',
+    TEMPLATE: 'template'
   },
-  LogicalOperators : {
-    "eq" : "=",
-    "neq" : "!=",
-    "lt" : "<",
-    "lte" : "<=",
-    "gt" : ">",
-    "gte" : ">=",
-    "btwn" : "between",
+  LogicalOperators: {
+    "eq": "=",
+    "neq": "!=",
+    "lt": "<",
+    "lte": "<=",
+    "gt": ">",
+    "gte": ">=",
+    "btwn": "between",
     /*
     - not yet - 
     "cont" : "contains",
@@ -36,7 +36,7 @@ NodeRed = {
     "nnull" : "!null"
     */
   },
-  ValueTypes : {
+  ValueTypes: {
     FLOAT: 'num',
     STRING: 'str',
     BOOL: 'bool'
@@ -44,9 +44,9 @@ NodeRed = {
 }
 
 PerseoTypes = {
-  ActionType : {
-    UPDATE :'update',
-    POST : 'post'
+  ActionType: {
+    UPDATE: 'update',
+    POST: 'post'
   }
 }
 
@@ -62,7 +62,7 @@ PerseoTypes = {
  *  - NodeRed.NodeType.HTTP_REQUEST : sends a HTTP message to an arbitrary endpoint
  * @property {String} outputDevice: The device to be updated, if needed.
  */
-var perseoTemplate = {
+var requestTemplate = {
   "name": "",
   "variables": [],
   "pattern": {
@@ -72,9 +72,13 @@ var perseoTemplate = {
   "action": {
     "type": "",
     "template": "",
-    "parameters": { }
+    "parameters": {}
   },
-  "outputDevice" : ""
+  "outputDevice": {
+    "type": "",
+    "id": "",
+    "attributes": []
+  }
 };
 
 /**
@@ -99,7 +103,7 @@ function generateCastFromValueType(property, nodeRedType) {
   switch (nodeRedType) {
     case NodeRed.ValueTypes.FLOAT:
       return 'cast(cast(' + property + ', String), float)';
-    break;
+      break;
     case NodeRed.ValueTypes.STRING:
       return 'cast(' + property + ', String)';
       break;
@@ -115,7 +119,7 @@ function convertNodeRedValueType(type) {
   switch (type) {
     case NodeRed.ValueTypes.FLOAT:
       return 'float';
-    break;
+      break;
     case NodeRed.ValueTypes.STRING:
       return 'string';
     default:
@@ -142,7 +146,7 @@ function extractVariables(template, detectedVariables) {
     detectedVariables.push('ev.' + convertedTag + '? as ' + convertedTag);
     translatedTemplate = begin + '${' + convertedTag + '}' + remaining;
     translatedTemplate = extractVariables(translatedTemplate, detectedVariables);
-    
+
   } else {
     translatedTemplate = template;
   }
@@ -174,7 +178,20 @@ function extractDataFromNode(node, request, deviceType, deviceName) {
   switch (node.type) {
     case NodeRed.NodeType.OUTPUT_DEVICE:
       var requestClone = cloneRequest(request);
-      requestClone.outputDevice = node.name;
+      requestClone.outputDevice.id = node.name;
+      if (node.device == "VirtualDevice") {
+        requestClone.outputDevice.type = "VirtualDevice";
+        requestClone.outputDevice.attributes.push({
+          "name": "Device",
+          "type": "String",
+          "value": node.attrs
+        });
+        requestClone.outputDevice.attributes.push({
+          "name": "TimeInstant",
+          "type": "ISO8601",
+          "value": ""
+        });
+      }
       perseoRequestResults.push(requestClone);
       break;
     case NodeRed.NodeType.INPUT_DEVICE:
@@ -190,37 +207,37 @@ function extractDataFromNode(node, request, deviceType, deviceName) {
         }
       }
       break;
-    case NodeRed.NodeType.SWITCH: 
+    case NodeRed.NodeType.SWITCH:
       var ruleOperation = undefined;
       var ruleValue = undefined;
       var ruleType = undefined;
       // Each wireset inherently iterates over rules
       for (var wireset = 0; wireset < node.wires.length; wireset++) {
-          ruleOperation = node.rules[wireset].t;
-          if (ruleOperation in NodeRed.LogicalOperators) {
-            // If this operator is supported.
-            var requestClone = cloneRequest(request);
-            ruleValue = node.rules[wireset].v;
-            ruleType = node.rules[wireset].vt;
-            if (ruleOperation == 'btwn') {
-              ruleOperation = 'gte';
-              addFilter(node, ruleOperation, ruleValue, ruleType, requestClone);
-              ruleOperation = 'lte';
-              ruleValue = node.rules[wireset].v2;
-              ruleType = node.rules[wireset].v2t;
-              addFilter(node, ruleOperation, ruleValue, ruleType, requestClone);
-            } else {
-              addFilter(node, ruleOperation, ruleValue, ruleType, requestClone);
-            }
-            
-            requestClone.pattern.type = deviceType;
-            for (var wire = 0; wire < node.wires[wireset].length; wire++) { 
-              nextNode = objects[node.wires[wireset][wire]];
-              var result = extractDataFromNode(nextNode, requestClone, deviceType, deviceName);
-              perseoRequestResults = tempResults.concat(result);
-              tempResults = perseoRequestResults;
-            }
-          
+        ruleOperation = node.rules[wireset].t;
+        if (ruleOperation in NodeRed.LogicalOperators) {
+          // If this operator is supported.
+          var requestClone = cloneRequest(request);
+          ruleValue = node.rules[wireset].v;
+          ruleType = node.rules[wireset].vt;
+          if (ruleOperation == 'btwn') {
+            ruleOperation = 'gte';
+            addFilter(node, ruleOperation, ruleValue, ruleType, requestClone);
+            ruleOperation = 'lte';
+            ruleValue = node.rules[wireset].v2;
+            ruleType = node.rules[wireset].v2t;
+            addFilter(node, ruleOperation, ruleValue, ruleType, requestClone);
+          } else {
+            addFilter(node, ruleOperation, ruleValue, ruleType, requestClone);
+          }
+
+          requestClone.pattern.type = deviceType;
+          for (var wire = 0; wire < node.wires[wireset].length; wire++) {
+            nextNode = objects[node.wires[wireset][wire]];
+            var result = extractDataFromNode(nextNode, requestClone, deviceType, deviceName);
+            perseoRequestResults = tempResults.concat(result);
+            tempResults = perseoRequestResults;
+          }
+
         }
       }
       break;
@@ -232,14 +249,21 @@ function extractDataFromNode(node, request, deviceType, deviceName) {
           var requestClone = cloneRequest(request);
           requestClone.action.type = PerseoTypes.ActionType.UPDATE;
           requestClone.action.parameters = {
-              "attributes": [
-                  {
-                      "name": trimProperty(node.rules[rule].p, 'payload.'),
-                      "type": convertNodeRedValueType(node.rules[rule].tot),
-                      "value": node.rules[rule].to
-                  }
-              ]
+            "attributes": [
+              {
+                "name": trimProperty(node.rules[rule].p, 'payload.'),
+                "type": convertNodeRedValueType(node.rules[rule].tot),
+                "value": node.rules[rule].to
+              }
+            ]
           };
+          requestClone.outputDevice.attributes.push(
+            {
+              "name": trimProperty(node.rules[rule].p, 'payload.'),
+              "type": convertNodeRedValueType(node.rules[rule].tot),
+              "value": node.rules[rule].to
+            }
+          );
 
           // Keep checking further boxes - there might be further switches and other actions
           for (var wireset = 0; wireset < node.wires.length; wireset++) {
@@ -252,20 +276,20 @@ function extractDataFromNode(node, request, deviceType, deviceName) {
           }
         }
       }
-      
+
       break;
     case NodeRed.NodeType.HTTP_REQUEST:
       switch (node.method) {
         case "POST":
           request.action.type = PerseoTypes.ActionType.POST;
-          request.action.parameters = { 
-            "url" : node.url,
-            "method" : "POST",
-            "headers" : { 
-              "Content-type" : "text/plain"
+          request.action.parameters = {
+            "url": node.url,
+            "method": "POST",
+            "headers": {
+              "Content-type": "text/plain"
             }
           };
-        break;
+          break;
       }
       perseoRequestResults.push(request);
       tempResults = perseoRequestResults;
@@ -306,7 +330,7 @@ function transformToPerseoRequest(mashupId, requests) {
 
     // Change the mashupId dots to a underscore - perseo doesn't allow rule
     // names with dots.
-    var ruleName = "rule_" + mashupId.replace(".", "_") + "_" + (i+1);
+    var ruleName = "rule_" + mashupId.replace(".", "_") + "_" + (i + 1);
 
     perseoRequest['name'] = ruleName;
     perseoRequest['text'] = 'select *';
@@ -316,7 +340,7 @@ function transformToPerseoRequest(mashupId, requests) {
     for (var othervar = 0; othervar < requests[i].variables.length; othervar++) {
       perseoRequest['text'] += ', ' + requests[i].variables[othervar];
     }
-    
+
     perseoRequest['text'] += ' from pattern [';
     perseoRequest['text'] += 'ev = iotEvent(';
     perseoRequest['text'] += 'type = \"' + requests[i].pattern.type + '\" ';
@@ -328,9 +352,34 @@ function transformToPerseoRequest(mashupId, requests) {
     if (requests[i].action.type == PerseoTypes.ActionType.UPDATE) {
       perseoRequest.action.parameters['id'] = requests[i].outputDevice;
     }
-    perseoRequests.push({ruleName, perseoRequest});
+    perseoRequests.push({ ruleName, perseoRequest });
   }
   return perseoRequests;
+}
+
+
+/**
+ * Transform the internal representation of orion requests to a format
+ * that it actually can process.
+ * @param {Request} requests An array of requests to be transformed.
+ * @returns {PerseoRequest} An array of objects containing the properly transformed
+ * requests.
+ */
+function transformToOrionRequest(requests) {
+  orionRequests = [];
+
+  for (var i = 0; i < requests.length; i++) {
+    var orionRequest = {};
+    orionRequest.updateAction = "APPEND";
+    orionRequest.contextElements = [{
+      "type": requests[i].outputDevice.type,
+      "isPattern": "false",
+      "id": requests[i].outputDevice.id,
+      "attributes": requests[i].outputDevice.attributes
+    }];
+    orionRequests.push(orionRequest);
+  }
+  return orionRequests;
 }
 
 /**
@@ -342,8 +391,9 @@ function transformToPerseoRequest(mashupId, requests) {
  * be used to associate all the rules that a particular flow generated.
  */
 function translateMashup(mashupJson) {
-  var segmentedResults = { };
-  var results = [];
+  var segmentedResults = {};
+  var perseoResults = [];
+  var orionResults = [];
   var tempResults = [];
 
   //var boxes = JSON.parse(mashupJson);
@@ -354,15 +404,22 @@ function translateMashup(mashupJson) {
 
   for (var id in objects) {
     if (objects[id].type == 'device out') {
-      var perseoRequest = cloneRequest(perseoTemplate);
-      var ret = extractDataFromNode(objects[id], perseoRequest, objects[id].device);
-      ret = transformToPerseoRequest(objects[id].z, ret);
-      tempResults = results.concat(ret);
-      results = tempResults;
+      var perseoRequest = cloneRequest(requestTemplate);
+      var requests = extractDataFromNode(objects[id], perseoRequest, objects[id].device);
+      let perseoRequests = transformToPerseoRequest(objects[id].z, requests);
+      let orionRequests = transformToOrionRequest(requests);
+
+      tempResults = perseoResults.concat(perseoRequests);
+      perseoResults = tempResults;
+      tempResults = orionResults.concat(orionRequests);
+      orionResults = tempResults;
     }
   }
 
-  segmentedResults = { "perseoRequests" : results };
+  segmentedResults = {
+    "perseoRequests": perseoResults,
+    "orionRequests": orionResults
+  };
 
   return segmentedResults;
 }
