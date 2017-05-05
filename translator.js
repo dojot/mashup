@@ -4,9 +4,8 @@
  * body part).
  */
 
-var fs = require('fs');
-var filename = process.argv[2];
-var util = require('util');
+var util = require('util'),
+    config = require('./config');
 var objects = {};
 
 NodeRed = {
@@ -75,6 +74,11 @@ var requestTemplate = {
     "parameters": {}
   },
   "outputDevice": {
+    "type": "",
+    "id": "",
+    "attributes": []
+  },
+  "inputDevice": {
     "type": "",
     "id": "",
     "attributes": []
@@ -155,9 +159,12 @@ function extractVariables(template, detectedVariables) {
 
 function addFilter(node, ruleOperation, ruleValue, ruleType, request) {
   // As this is a 'dynamic' property for perseo, it must end with a question mark.
-  var nodeProperty = trimProperty(node.property, 'payload.') + '?';
-  var nodePropertyWithCast = generateCastFromValueType(nodeProperty, ruleType);
+  var nodeProperty = trimProperty(node.property, 'payload.');
+  var nodePropertyWithCast = generateCastFromValueType(nodeProperty + '?', ruleType);
   request.pattern.otherFilters.push(nodePropertyWithCast + ' ' + NodeRed.LogicalOperators[ruleOperation] + ' ' + ruleValue);
+
+  // TODO Change this to a proper comparison condition test, such as attribute > value  
+  request.inputDevice.attributes.push(nodeProperty);
 }
 
 /**
@@ -200,6 +207,8 @@ function extractDataFromNode(node, request, deviceType, deviceName) {
         for (var wire = 0; wire < node.wires[wireset].length; wire++) {
           // Create a new request so that it can be modified by other boxes.
           var requestClone = cloneRequest(request);
+          requestClone.inputDevice.type = node.device;
+          requestClone.inputDevice.id = node.name;
           nextNode = objects[node.wires[wireset][wire]];
           var result = extractDataFromNode(nextNode, requestClone, node.device, node.name);
           perseoRequestResults = tempResults.concat(result);
@@ -229,7 +238,6 @@ function extractDataFromNode(node, request, deviceType, deviceName) {
           } else {
             addFilter(node, ruleOperation, ruleValue, ruleType, requestClone);
           }
-
           requestClone.pattern.type = deviceType;
           for (var wire = 0; wire < node.wires[wireset].length; wire++) {
             nextNode = objects[node.wires[wireset][wire]];
@@ -261,7 +269,7 @@ function extractDataFromNode(node, request, deviceType, deviceName) {
             {
               "name": trimProperty(node.rules[rule].p, 'payload.'),
               "type": convertNodeRedValueType(node.rules[rule].tot),
-              "value": node.rules[rule].to
+              "value": "" // No value at creation time
             }
           );
 
@@ -342,7 +350,7 @@ function transformToPerseoRequest(mashupId, requests) {
     }
 
     perseoRequest['text'] += ' from pattern [';
-    perseoRequest['text'] += 'ev = iotEvent(';
+    perseoRequest['text'] += 'every ev = iotEvent(';
     perseoRequest['text'] += 'type = \"' + requests[i].pattern.type + '\" ';
     for (var filter = 0; filter < requests[i].pattern.otherFilters.length; filter++) {
       perseoRequest['text'] += 'and ' + requests[i].pattern.otherFilters[filter] + ' ';
@@ -350,7 +358,8 @@ function transformToPerseoRequest(mashupId, requests) {
     perseoRequest['text'] += ')]';
     perseoRequest['action'] = requests[i].action;
     if (requests[i].action.type == PerseoTypes.ActionType.UPDATE) {
-      perseoRequest.action.parameters['id'] = requests[i].outputDevice;
+      perseoRequest.action.parameters.id = requests[i].outputDevice.id;
+      perseoRequest.action.parameters.type = requests[i].outputDevice.type;
     }
     perseoRequests.push({ ruleName, perseoRequest });
   }
@@ -362,13 +371,13 @@ function transformToPerseoRequest(mashupId, requests) {
  * Transform the internal representation of orion requests to a format
  * that it actually can process.
  * @param {Request} requests An array of requests to be transformed.
- * @returns {PerseoRequest} An array of objects containing the properly transformed
+ * @returns {Array} An array of objects containing the properly transformed
  * requests.
  */
 function transformToOrionRequest(requests) {
   orionRequests = [];
-
   for (var i = 0; i < requests.length; i++) {
+    // Virtual device creation requests
     var orionRequest = {};
     orionRequest.updateAction = "APPEND";
     orionRequest.contextElements = [{
@@ -379,7 +388,46 @@ function transformToOrionRequest(requests) {
     }];
     orionRequests.push(orionRequest);
   }
+
   return orionRequests;
+}
+
+
+/**
+ * Transform the internal representation of orion subscription to a format
+ * that it actually can process.
+ * @param {Request} requests An array of requests to be transformed.
+ * @returns {Array} An array of objects containing the properly transformed
+ * requests.
+ */
+function transformToOrionSubscriptions(requests) {
+  orionSubscriptions = [];
+  for (var i = 0; i < requests.length; i++) {
+    // Perseo subscription requests.
+    orionSubscription = {};
+    orionSubscription.entities = [ ];
+    orionSubscription.entities.push( {
+      "type" : requests[i].inputDevice.type,
+      "isPattern" : "false",
+      "id" : requests[i].inputDevice.id
+    });
+    orionSubscription.reference = config.perseo_fe.url + "/notices";
+    orionSubscription.duration = config.orion.default_duration;
+
+    // One request per attribute
+    for (var j = 0; j < requests[i].inputDevice.attributes.length; j++) {
+      let orionSubscriptionClone = cloneRequest(orionSubscription);
+      orionSubscriptionClone.attributes = [ requests[i].inputDevice.attributes[i] ];
+      orionSubscriptionClone.notifyConditions = [ {
+        "type" : "ONCHANGE",
+        "condValues" : [
+          requests[i].inputDevice.attributes[i]
+        ]
+      }];
+      orionSubscriptions.push(orionSubscriptionClone);
+    }
+  }
+  return orionSubscriptions;
 }
 
 /**
@@ -394,6 +442,7 @@ function translateMashup(mashupJson) {
   var segmentedResults = {};
   var perseoResults = [];
   var orionResults = [];
+  var orionSubsResults = [];
   var tempResults = [];
 
   //var boxes = JSON.parse(mashupJson);
@@ -408,17 +457,21 @@ function translateMashup(mashupJson) {
       var requests = extractDataFromNode(objects[id], perseoRequest, objects[id].device);
       let perseoRequests = transformToPerseoRequest(objects[id].z, requests);
       let orionRequests = transformToOrionRequest(requests);
+      let orionSubscriptions = transformToOrionSubscriptions(requests);
 
       tempResults = perseoResults.concat(perseoRequests);
       perseoResults = tempResults;
       tempResults = orionResults.concat(orionRequests);
       orionResults = tempResults;
+      tempResults = orionSubsResults.concat(orionSubscriptions);
+      orionSubsResults = tempResults;
     }
   }
 
   segmentedResults = {
     "perseoRequests": perseoResults,
-    "orionRequests": orionResults
+    "orionRequests": orionResults,
+    "orionSubscriptions" : orionSubsResults
   };
 
   return segmentedResults;

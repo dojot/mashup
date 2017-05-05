@@ -91,7 +91,7 @@ app.post('/v1/flow', function (req, res) {
       'Fiware-Service': jwData['service'],
       'Fiware-ServicePath': '/'
     }
-  }
+  } 
 
   if ((!('id' in flowData)) || (flowData.id.length == 0)) {
     flowData.id = sid();
@@ -116,7 +116,7 @@ app.post('/v1/flow', function (req, res) {
     // Send the requests
     for (var i = 0; i < flowRequests.perseoRequests.length; i++) {
       let flowRequest = flowRequests.perseoRequests[i];
-      request.post({url: config.perseo_fe.url + "/rules/", json: flowRequest.perseoRequest, headers: flowHeader}, perseoCallback);
+      request.post({url: config.perseo_fe.url + "/rules", json: flowRequest.perseoRequest, headers: flowHeader}, perseoCallback);
       flowData.perseoRules.rules.push(flowRequest.ruleName);
     }
     flowData.perseoRules.headers = flowHeader;
@@ -129,6 +129,16 @@ app.post('/v1/flow', function (req, res) {
       request.post({url: config.orion.url + "/updateContext/", json: flowRequest, headers: flowHeader}, orionCallback);
     }
   }
+
+  if ("orionSubscriptions" in flowRequests) {
+    // Send the requests
+    for (var i = 0; i < flowRequests.orionSubscriptions.length; i++) {
+      let flowRequest = flowRequests.orionSubscriptions[i];
+      request.post({url: config.orion.url + "/subscribeContext/", json: flowRequest, headers: flowHeader}, orionCallback);
+    }
+  }
+
+    
 
   col.insertOne(flowData, function(err, result) {
     if (err) {

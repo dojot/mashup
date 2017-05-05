@@ -1,15 +1,18 @@
 var config = {};
 
 config.perseo_fe = {
-  url: 'http://172.22.0.10:9090'
+  url: 'http://perseo-fe:9090'
 }
 
 config.orion = {
-  url: 'http://172.22.0.7:1026/v1'
+  url: 'http://orion:1026/v1',
+  default_subscription_duration : "P1M"
 }
 
 config.mongo = {
-  url: "mongodb://172.22.0.2:27017/orchestrator"
+  url: "mongodb://mongodb:27017/orchestrator"
 }
+
+
 
 module.exports = config;
