@@ -85,13 +85,18 @@ app.post('/v1/flow', function (req, res) {
   }
 
   var flowHeader = { };
-  if ('authorization' in req.headers) {
-    let jwData = base64.decode(req.headers.Authorization.split('.')[1]);
-    flowHeader = { 
-      'Fiware-Service': jwData['service'],
-      'Fiware-ServicePath': '/'
+
+
+  for (var header in req.headers) {
+    if ('authorization' == header.toLowerCase()) {
+      let jwData = JSON.parse(base64.decode(req.headers[header].split('.')[1]));
+      flowHeader = { 
+        'Fiware-Service': jwData['service'],
+        'Fiware-ServicePath': '/'
+      }
+      break;
     }
-  } 
+  }
 
   if ((!('id' in flowData)) || (flowData.id.length == 0)) {
     flowData.id = sid();
