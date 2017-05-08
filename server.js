@@ -28,15 +28,15 @@ function sid() {
 
 /**
  * Callback function to perseo HTTP requests
- * @param {*} error 
- * @param {*} response 
- * @param {*} body 
+ * @param {*} error
+ * @param {*} response
+ * @param {*} body
  */
 function perseoCallback(error, response, body) {
   if (!error && response.statusCode == 200) {
     console.log(util.inspect(body, {showHidden: false, depth: null}));
   } else {
-    if (error) { 
+    if (error) {
       console.log(error);
     }
   }
@@ -44,15 +44,15 @@ function perseoCallback(error, response, body) {
 
 /**
  * Callback function to perseo HTTP requests
- * @param {*} error 
- * @param {*} response 
- * @param {*} body 
+ * @param {*} error
+ * @param {*} response
+ * @param {*} body
  */
 function orionCallback(error, response, body) {
   if (!error && response.statusCode == 200) {
     console.log(util.inspect(body, {showHidden: false, depth: null}));
   } else {
-    if (error) { 
+    if (error) {
       console.log(error);
     }
   }
@@ -90,7 +90,7 @@ app.post('/v1/flow', function (req, res) {
   for (var header in req.headers) {
     if ('authorization' == header.toLowerCase()) {
       let jwData = JSON.parse(base64.decode(req.headers[header].split('.')[1]));
-      flowHeader = { 
+      flowHeader = {
         'Fiware-Service': jwData['service'],
         'Fiware-ServicePath': '/'
       }
@@ -143,15 +143,13 @@ app.post('/v1/flow', function (req, res) {
     }
   }
 
-    
-
   col.insertOne(flowData, function(err, result) {
     if (err) {
       // TODO handle error
       res.status(500).send({msg: 'failed to retrieve data'});
       throw err;
     }
-    res.status(200).send({msg: 'flow created'});
+    res.status(200).send({msg: 'flow created', flow: flowData});
   })
 })
 
@@ -173,7 +171,7 @@ app.delete('/v1/flow', function (req, res) {
 
 //
 // GET handler - single version
-// 
+//
 app.get('/v1/flow/:flowid', function (req, res) {
   col.findOne({id: req.params.flowid}, function(err, flow) {
     if (err) {
