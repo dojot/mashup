@@ -206,10 +206,12 @@ app.delete('/v1/flow/:flowid', function (req, res) {
       throw err;
     }
 
-    for (var i = 0; i < flow.perseoRules.rules.length; i++) {
-      let flowId = flow.perseoRules.rules[i];
-      let flowHeader = flow.perseoRules.headers;
-      request.delete({url: config.perseo_fe.url + "/rules/" + flowId, headers: flowHeader}, perseoCallback);
+    if (flow != null) {
+      for (var i = 0; i < flow.perseoRules.rules.length; i++) {
+        let flowId = flow.perseoRules.rules[i];
+        let flowHeader = flow.perseoRules.headers;
+        request.delete({url: config.perseo_fe.url + "/rules/" + flowId, headers: flowHeader}, perseoCallback);
+      }
     }
   })
 

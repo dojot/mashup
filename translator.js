@@ -186,8 +186,8 @@ function extractDataFromNode(node, request, deviceType, deviceName) {
     case NodeRed.NodeType.OUTPUT_DEVICE:
       var requestClone = cloneRequest(request);
       requestClone.outputDevice.id = node.name;
-      if (node.device == "VirtualDevice") {
-        requestClone.outputDevice.type = "VirtualDevice";
+      if (node.device == "virtual") {
+        requestClone.outputDevice.type = node.device;
         requestClone.outputDevice.attributes.push({
           "name": "Device",
           "type": "String",
@@ -259,7 +259,7 @@ function extractDataFromNode(node, request, deviceType, deviceName) {
           requestClone.action.parameters = {
             "attributes": [
               {
-                "name": trimProperty(node.rules[rule].p, 'payload.'),
+                "name": trimProperty(node.rules[rule].p, '.'),
                 "type": convertNodeRedValueType(node.rules[rule].tot),
                 "value": node.rules[rule].to
               }
@@ -267,7 +267,7 @@ function extractDataFromNode(node, request, deviceType, deviceName) {
           };
           requestClone.outputDevice.attributes.push(
             {
-              "name": trimProperty(node.rules[rule].p, 'payload.'),
+              "name": trimProperty(node.rules[rule].p, '.'),
               "type": convertNodeRedValueType(node.rules[rule].tot),
               "value": "" // No value at creation time
             }
