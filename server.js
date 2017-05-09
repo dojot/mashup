@@ -43,7 +43,7 @@ function perseoCallback(error, response, body) {
 }
 
 /**
- * Callback function to perseo HTTP requests
+ * Callback function to orion HTTP requests
  * @param {*} error
  * @param {*} response
  * @param {*} body
@@ -58,38 +58,11 @@ function orionCallback(error, response, body) {
   }
 }
 
-//
-// GET handler
-//
-app.get('/v1/flow', function (req, res) {
-  col.find({}, {_id: 0}).toArray(function (err, flows) {
-    if (err) {
-      // TODO handle error
-      res.status(500).send({msg: 'failed to retrieve data'});
-      throw err;
-    }
-
-    res.status(200).send(flows);
-  })
-})
-
-
-//
-// POST handler
-//
-app.post('/v1/flow', function (req, res) {
-  let flowData = req.body;
-
-  if (!flowData) {
-    res.status(400).send({msg: "missing flow data"});
-  }
-
-  var flowHeader = { };
-
-
-  for (var header in req.headers) {
+function extractFiwareHeaders(flowHeaders) {
+  var flowHeader = {};
+  for (var header in flowHeaders) {
     if ('authorization' == header.toLowerCase()) {
-      let jwData = JSON.parse(base64.decode(req.headers[header].split('.')[1]));
+      let jwData = JSON.parse(base64.decode(flowHeaders[header].split('.')[1]));
       flowHeader = {
         'Fiware-Service': jwData['service'],
         'Fiware-ServicePath': '/'
@@ -97,6 +70,11 @@ app.post('/v1/flow', function (req, res) {
       break;
     }
   }
+  return flowHeader;
+}
+
+function addFlow(flowHeaders, flowData, callback) {
+  var flowHeader = extractFiwareHeaders(flowHeaders);
 
   if ((!('id' in flowData)) || (flowData.id.length == 0)) {
     flowData.id = sid();
@@ -113,44 +91,103 @@ app.post('/v1/flow', function (req, res) {
   var flowRequests = translator.translateMashup(flowData.flow);
   // Store perseo data so that the rules can be properly removed in the future
   flowData['perseoRules'] = {
-    "headers" : {}, // Headers used to create these rules (and so to remove them)
-    "rules" : []    // List of rule identifiers
+    headers : {}, // Headers used to create these rules (and so to remove them)
+    rules : []    // List of rule identifiers
   };
 
-  if ("perseoRequests" in flowRequests) {
+  if ('perseoRequests' in flowRequests) {
     // Send the requests
     for (var i = 0; i < flowRequests.perseoRequests.length; i++) {
       let flowRequest = flowRequests.perseoRequests[i];
-      request.post({url: config.perseo_fe.url + "/rules", json: flowRequest.perseoRequest, headers: flowHeader}, perseoCallback);
+      request.post({url: config.perseo_fe.url + '/rules', json: flowRequest.perseoRequest, headers: flowHeader}, perseoCallback);
       flowData.perseoRules.rules.push(flowRequest.ruleName);
     }
     flowData.perseoRules.headers = flowHeader;
   }
 
-  if ("orionRequests" in flowRequests) {
+  if ('orionRequests' in flowRequests) {
     // Send the requests
     for (var i = 0; i < flowRequests.orionRequests.length; i++) {
       let flowRequest = flowRequests.orionRequests[i];
-      request.post({url: config.orion.url + "/updateContext/", json: flowRequest, headers: flowHeader}, orionCallback);
+      request.post({url: config.orion.url + '/updateContext/', json: flowRequest, headers: flowHeader}, orionCallback);
     }
   }
 
-  if ("orionSubscriptions" in flowRequests) {
+  if ('orionSubscriptions' in flowRequests) {
     // Send the requests
     for (var i = 0; i < flowRequests.orionSubscriptions.length; i++) {
       let flowRequest = flowRequests.orionSubscriptions[i];
-      request.post({url: config.orion.url + "/subscribeContext/", json: flowRequest, headers: flowHeader}, orionCallback);
+      request.post({url: config.orion.url + '/subscribeContext/', json: flowRequest, headers: flowHeader}, orionCallback);
     }
   }
 
   col.insertOne(flowData, function(err, result) {
+    callback(err);
+    return;
+  });
+}
+
+function deleteFlow(flowid, callback) {
+  // Removing related rules
+  col.findOne({id: flowid}, function(err, flow) {
     if (err) {
-      // TODO handle error
+      // An error ocurred
+      callback(err, 0);
+      return;
+    }
+
+    // Remove all perseo rules related to this flow
+    if (flow != null) {
+      for (var i = 0; i < flow.perseoRules.rules.length; i++) {
+        let flowId = flow.perseoRules.rules[i];
+        let flowHeader = flow.perseoRules.headers;
+        request.delete({url: config.perseo_fe.url + "/rules/" + flowId, headers: flowHeader}, perseoCallback);
+      }
+      col.remove({id: flowid}, null, function(err, nRemoved) {
+        callback(err, nRemoved);
+        return;
+      });
+    } else {
+      // There is no such element in the database.
+      callback(null, 0);
+      return;
+    }
+  })
+}
+
+
+//
+// GET handler
+//
+app.get('/v1/flow', function (req, res) {
+  col.find({}, {_id: 0}).toArray(function (err, flows) {
+    if (err) {
       res.status(500).send({msg: 'failed to retrieve data'});
       throw err;
     }
-    res.status(200).send({msg: 'flow created', flow: flowData});
+    res.status(200).send(flows);
   })
+})
+
+//
+// POST handler
+//
+app.post('/v1/flow', function (httpRequest, httpResponse) {
+  let flowData = httpRequest.body;
+  let flowHeaders = httpRequest.headers;
+
+  if (!flowData) {
+    httpResponse.status(400).send({msg: "missing flow data"});
+    return;
+  }
+
+  addFlow(flowHeaders, flowData, function(err) {
+    if (err) {
+      httpResponse.status(500).send({msg: 'failed to insert data'});
+      throw err;
+    }
+    httpResponse.status(200).send({msg: 'flow created ', flow: flowData});
+  });
 })
 
 //
@@ -178,7 +215,6 @@ app.get('/v1/flow/:flowid', function (req, res) {
       res.status(500).send({msg: 'failed to retrieve data'});
       throw err;
     }
-
     res.status(200).send({msg: 'ok', flow: flow});
   })
 })
@@ -187,8 +223,34 @@ app.get('/v1/flow/:flowid', function (req, res) {
 //
 // PUT handler - single version
 //
-app.put('/v1/flow/:flowid', function (req, res) {
-  res.status(500).send({msg: 'not yet implemented'});
+app.put('/v1/flow/:flowid', function (httpRequest, httpResponse) {
+
+  let flowData = httpRequest.body;
+  let flowHeaders = httpRequest.headers;
+
+  if (!flowData) {
+    httpResponse.status(400).send({msg: "missing flow data"});
+    return;
+  }
+
+  deleteFlow(httpRequest.params.flowid, function(err, nRemoved) {
+    if (err) {
+      httpResponse.status(500).send({msg: 'failed to remove flow'});
+      throw err;
+    }
+    if (nRemoved === 0) {
+      httpResponse.status(404).send({msg: 'given flow is unknown'});
+      return;
+    }
+    addFlow(flowHeaders, flowData, function(err) {
+      if (err) {
+        httpResponse.status(500).send({msg: 'failed to insert data'});
+        throw err;
+      }
+      httpResponse.status(200).send({msg: 'flow updated', flow: flowData});
+      return;
+    });
+  });
 })
 
 
@@ -196,33 +258,14 @@ app.put('/v1/flow/:flowid', function (req, res) {
 // DELETE handler - single version
 //
 app.delete('/v1/flow/:flowid', function (req, res) {
-
-  // Removing related rules
-  col.findOne({id: req.params.flowid}, function(err, flow) {
-    if (err) {
-      res.status(500).send({msg: 'failed to retrieve data'});
-      throw err;
-    }
-
-    if (flow != null) {
-      for (var i = 0; i < flow.perseoRules.rules.length; i++) {
-        let flowId = flow.perseoRules.rules[i];
-        let flowHeader = flow.perseoRules.headers;
-        request.delete({url: config.perseo_fe.url + "/rules/" + flowId, headers: flowHeader}, perseoCallback);
-      }
-    }
-  })
-
-  col.remove({id: req.params.flowid}, function(err, nRemoved) {
+  deleteFlow(req.params.flowid, function(err, nRemoved) {
     if (err) {
       res.status(500).send({msg: 'failed to remove flow'});
       throw err;
     }
-
     if (nRemoved === 0) {
       res.status(404).send({msg: 'given flow is unknown'});
     }
-
     res.status(200).send({msg: 'flow removed', id: req.params.flowid});
   })
 })
