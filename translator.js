@@ -1,6 +1,6 @@
 
 /**
- * Translate a JSON from node-RED to a perseo-fe request (only 
+ * Translate a JSON from node-RED to a perseo-fe request (only
  * body part).
  */
 
@@ -26,7 +26,7 @@ NodeRed = {
     "gte": ">=",
     "btwn": "between",
     /*
-    - not yet - 
+    - not yet -
     "cont" : "contains",
     "regex" : "regex",
     "true" : "1",
@@ -163,7 +163,7 @@ function addFilter(node, ruleOperation, ruleValue, ruleType, request) {
   var nodePropertyWithCast = generateCastFromValueType(nodeProperty + '?', ruleType);
   request.pattern.otherFilters.push(nodePropertyWithCast + ' ' + NodeRed.LogicalOperators[ruleOperation] + ' ' + ruleValue);
 
-  // TODO Change this to a proper comparison condition test, such as attribute > value  
+  // TODO Change this to a proper comparison condition test, such as attribute > value
   request.inputDevice.attributes.push(nodeProperty);
 }
 
@@ -185,9 +185,9 @@ function extractDataFromNode(node, request, deviceType, deviceName) {
   switch (node.type) {
     case NodeRed.NodeType.OUTPUT_DEVICE:
       var requestClone = cloneRequest(request);
-      requestClone.outputDevice.id = node.name;
-      if (node.device == "virtual") {
-        requestClone.outputDevice.type = node.device;
+      requestClone.outputDevice.id = node._device_id;
+      if (node._device_type == "virtual") {
+        requestClone.outputDevice.type = node._device_type;
         requestClone.outputDevice.attributes.push({
           "name": "Device",
           "type": "String",
@@ -432,7 +432,7 @@ function transformToOrionSubscriptions(requests) {
 
 /**
  * Translate a mashup from node-RED to a series of requests to perseo-fe.
- * 
+ *
  * @param {String} mashupJson The string containing the node-RED mashup description
  * @returns An array of objects {ruleName, perseoRequest} ready to be added to the body of a HTTP POST message
  * to perseo-fe. The rule name is the ID of a flow (or tab-id in nodeRED terminology) and it should
