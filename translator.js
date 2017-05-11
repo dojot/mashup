@@ -6,7 +6,6 @@
 
 var util = require('util'),
     config = require('./config');
-var objects = {};
 
 NodeRed = {
   NodeType: {
@@ -112,7 +111,7 @@ function generateCastFromValueType(property, nodeRedType) {
       return 'cast(' + property + ', String)';
       break;
     case NodeRed.ValueTypes.BOOL:
-      return 'cast(cast(' + property + ', String), integer)';
+      return 'cast(cast(' + property + ', String), int)';
       break;
     default:
       return 'cast(' + property + ', String)';
@@ -146,7 +145,7 @@ function extractVariables(template, detectedVariables) {
     var tag = template.slice(beginTagIndex, endTagIndex);
     endTagIndex += 2;
     var remaining = template.slice(endTagIndex);
-    var convertedTag = trimProperty(tag, "payload.");
+    var convertedTag = trimProperty(tag, ".");
     detectedVariables.push('ev.' + convertedTag + '? as ' + convertedTag);
     translatedTemplate = begin + '${' + convertedTag + '}' + remaining;
     translatedTemplate = extractVariables(translatedTemplate, detectedVariables);
@@ -159,7 +158,7 @@ function extractVariables(template, detectedVariables) {
 
 function addFilter(node, ruleOperation, ruleValue, ruleType, request) {
   // As this is a 'dynamic' property for perseo, it must end with a question mark.
-  var nodeProperty = trimProperty(node.property, 'payload.');
+  var nodeProperty = trimProperty(node.property, '.');
   var nodePropertyWithCast = generateCastFromValueType(nodeProperty + '?', ruleType);
   request.pattern.otherFilters.push(nodePropertyWithCast + ' ' + NodeRed.LogicalOperators[ruleOperation] + ' ' + ruleValue);
 
@@ -170,6 +169,7 @@ function addFilter(node, ruleOperation, ruleValue, ruleType, request) {
 /**
  * Extract content from node-RED nodes and translate them
  * to related structures in perseo-fe request.
+ * @param {Array} objects Array of all objects in this flow
  * @param {Object} node node-RED node to be analyzed
  * @param {Request} request Current perseo-fe request. Keep in mind that
  * a particular node in node-RED can generate multiple requests for
@@ -177,7 +177,7 @@ function addFilter(node, ruleOperation, ruleValue, ruleType, request) {
  * @param {String} deviceType The current device being analyzed (source
  * device).
  */
-function extractDataFromNode(node, request, deviceType, deviceName) {
+function extractDataFromNode(objects, node, request, deviceType, deviceName) {
   var nextNode = undefined;
   var perseoRequestResults = [];
   var tempResults = [];
@@ -207,10 +207,10 @@ function extractDataFromNode(node, request, deviceType, deviceName) {
         for (var wire = 0; wire < node.wires[wireset].length; wire++) {
           // Create a new request so that it can be modified by other boxes.
           var requestClone = cloneRequest(request);
-          requestClone.inputDevice.type = node.device;
-          requestClone.inputDevice.id = node.name;
+          requestClone.inputDevice.type = 'device';
+          requestClone.inputDevice.id = node._device_id;
           nextNode = objects[node.wires[wireset][wire]];
-          var result = extractDataFromNode(nextNode, requestClone, node.device, node.name);
+          var result = extractDataFromNode(objects, nextNode, requestClone, node._device_id, node.name);
           perseoRequestResults = tempResults.concat(result);
           tempResults = perseoRequestResults;
         }
@@ -241,7 +241,7 @@ function extractDataFromNode(node, request, deviceType, deviceName) {
           requestClone.pattern.type = deviceType;
           for (var wire = 0; wire < node.wires[wireset].length; wire++) {
             nextNode = objects[node.wires[wireset][wire]];
-            var result = extractDataFromNode(nextNode, requestClone, deviceType, deviceName);
+            var result = extractDataFromNode(objects, nextNode, requestClone, deviceType, deviceName);
             perseoRequestResults = tempResults.concat(result);
             tempResults = perseoRequestResults;
           }
@@ -277,7 +277,7 @@ function extractDataFromNode(node, request, deviceType, deviceName) {
           for (var wireset = 0; wireset < node.wires.length; wireset++) {
             for (var wire = 0; wire < node.wires[wireset].length; wire++) {
               nextNode = objects[node.wires[wireset][wire]];
-              var result = extractDataFromNode(nextNode, requestClone, deviceType, deviceName);
+              var result = extractDataFromNode(objects, nextNode, requestClone, deviceType, deviceName);
               perseoRequestResults = tempResults.concat(result);
               tempResults = perseoRequestResults;
             }
@@ -313,7 +313,7 @@ function extractDataFromNode(node, request, deviceType, deviceName) {
       for (var wireset = 0; wireset < node.wires.length; wireset++) {
         for (var wire = 0; wire < node.wires[wireset].length; wire++) {
           nextNode = objects[node.wires[wireset][wire]];
-          var result = extractDataFromNode(nextNode, requestClone, deviceType, deviceName);
+          var result = extractDataFromNode(objects, nextNode, requestClone, deviceType, deviceName);
           perseoRequestResults = tempResults.concat(result);
           tempResults = perseoRequestResults;
         }
@@ -351,7 +351,7 @@ function transformToPerseoRequest(mashupId, requests) {
 
     perseoRequest['text'] += ' from pattern [';
     perseoRequest['text'] += 'every ev = iotEvent(';
-    perseoRequest['text'] += 'type = \"' + requests[i].pattern.type + '\" ';
+    perseoRequest['text'] += 'id = \"' + requests[i].pattern.type + '\" ';
     for (var filter = 0; filter < requests[i].pattern.otherFilters.length; filter++) {
       perseoRequest['text'] += 'and ' + requests[i].pattern.otherFilters[filter] + ' ';
     }
@@ -444,6 +444,7 @@ function translateMashup(mashupJson) {
   var orionResults = [];
   var orionSubsResults = [];
   var tempResults = [];
+  var objects = {};
 
   //var boxes = JSON.parse(mashupJson);
   var boxes = mashupJson;
@@ -454,7 +455,7 @@ function translateMashup(mashupJson) {
   for (var id in objects) {
     if (objects[id].type == 'device out') {
       var perseoRequest = cloneRequest(requestTemplate);
-      var requests = extractDataFromNode(objects[id], perseoRequest, objects[id].device);
+      var requests = extractDataFromNode(objects, objects[id], perseoRequest, objects[id].device);
       let perseoRequests = transformToPerseoRequest(objects[id].z, requests);
       let orionRequests = transformToOrionRequest(requests);
       let orionSubscriptions = transformToOrionSubscriptions(requests);
