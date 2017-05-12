@@ -58,6 +58,13 @@ function orionCallback(error, response, body) {
   }
 }
 
+/**
+ * Extract headers related to Fiware.
+ * These headers are:
+ *  - Fiware-Service
+ *  - Fiware-ServicePath
+ * @param {*} flowHeaders The headers in HTTP request.
+ */
 function extractFiwareHeaders(flowHeaders) {
   var flowHeader = {};
   for (var header in flowHeaders) {
@@ -73,9 +80,7 @@ function extractFiwareHeaders(flowHeaders) {
   return flowHeader;
 }
 
-function addFlow(flowHeaders, flowData, callback) {
-  var flowHeader = extractFiwareHeaders(flowHeaders);
-
+function addFlow(flowHeader, flowData, callback) {
   if ((!('id' in flowData)) || (flowData.id.length == 0)) {
     flowData.id = sid();
   }
@@ -86,6 +91,8 @@ function addFlow(flowHeaders, flowData, callback) {
 
   flowData.created = Date.now();
   flowData.updated = flowData.created;
+  flowData.service = flowHeader['Fiware-Service'];
+  flowData.servicePath = flowHeader['Fiware-ServicePath'];
 
   // Translate flow to perseo and/or orion
   var flowRequests = translator.translateMashup(flowData.flow);
@@ -127,9 +134,9 @@ function addFlow(flowHeaders, flowData, callback) {
   });
 }
 
-function deleteFlow(flowid, callback) {
+function deleteFlow(flowHeader, flowid, callback) {
   // Removing related rules
-  col.findOne({id: flowid}, function(err, flow) {
+  col.findOne({id: flowid, service: flowHeader['Fiware-Service']}, function(err, flow) {
     if (err) {
       // An error ocurred
       callback(err, 0);
@@ -159,13 +166,15 @@ function deleteFlow(flowid, callback) {
 //
 // GET handler
 //
-app.get('/v1/flow', function (req, res) {
-  col.find({}, {_id: 0}).toArray(function (err, flows) {
+app.get('/v1/flow', function (httpRequest, httpResponse) {
+  var flowHeader = extractFiwareHeaders(httpRequest.headers);
+  col.find({service: flowHeader['Fiware-Service']}, {_id: 0}).toArray(function (err, flows) {
+  //col.find({}, {_id: 0}).toArray(function (err, flows) {
     if (err) {
-      res.status(500).send({msg: 'failed to retrieve data'});
+      httpResponse.status(500).send({msg: 'failed to retrieve data'});
       throw err;
     }
-    res.status(200).send(flows);
+    httpResponse.status(200).send(flows);
   })
 })
 
@@ -174,14 +183,14 @@ app.get('/v1/flow', function (req, res) {
 //
 app.post('/v1/flow', function (httpRequest, httpResponse) {
   let flowData = httpRequest.body;
-  let flowHeaders = httpRequest.headers;
+  var flowHeader = extractFiwareHeaders(httpRequest.headers);
 
   if (!flowData) {
     httpResponse.status(400).send({msg: "missing flow data"});
     return;
   }
 
-  addFlow(flowHeaders, flowData, function(err) {
+  addFlow(flowHeader, flowData, function(err) {
     if (err) {
       httpResponse.status(500).send({msg: 'failed to insert data'});
       throw err;
@@ -193,8 +202,9 @@ app.post('/v1/flow', function (httpRequest, httpResponse) {
 //
 // DELETE handler
 //
-app.delete('/v1/flow', function (req, res) {
-  col.find().forEach(function(flowData) {
+app.delete('/v1/flow', function (httpRequest, httpResponse) {
+  var flowHeader = extractFiwareHeaders(httpRequest.headers);
+  col.find({service: flowHeader['Fiware-Service']}).forEach(function(flowData) {
     for (var i = 0; i < flowData.perseoRules.rules.length; i++) {
       let flowId = flowData.perseoRules.rules[i];
       let flowHeader = flowData.perseoRules.headers;
@@ -202,20 +212,21 @@ app.delete('/v1/flow', function (req, res) {
     }
   });
   col.remove();
-  res.status(200).send({msg: 'all flows removed'})
+  httpResponse.status(200).send({msg: 'all flows removed'})
 })
 
 
 //
 // GET handler - single version
 //
-app.get('/v1/flow/:flowid', function (req, res) {
-  col.findOne({id: req.params.flowid}, function(err, flow) {
+app.get('/v1/flow/:flowid', function (httpRequest, httpResponse) {
+  var flowHeader = extractFiwareHeaders(httpRequest.headers);
+  col.findOne({service: flowHeader['Fiware-Service'], id: httpRequest.params.flowid}, function(err, flow) {
     if (err) {
-      res.status(500).send({msg: 'failed to retrieve data'});
+      httpResponse.status(500).send({msg: 'failed to retrieve data'});
       throw err;
     }
-    res.status(200).send({msg: 'ok', flow: flow});
+    httpResponse.status(200).send({msg: 'ok', flow: flow});
   })
 })
 
@@ -224,16 +235,15 @@ app.get('/v1/flow/:flowid', function (req, res) {
 // PUT handler - single version
 //
 app.put('/v1/flow/:flowid', function (httpRequest, httpResponse) {
-
   let flowData = httpRequest.body;
-  let flowHeaders = httpRequest.headers;
+  var flowHeader = extractFiwareHeaders(httpRequest.headers);
 
   if (!flowData) {
     httpResponse.status(400).send({msg: "missing flow data"});
     return;
   }
 
-  deleteFlow(httpRequest.params.flowid, function(err, nRemoved) {
+  deleteFlow(flowHeader, httpRequest.params.flowid, function(err, nRemoved) {
     if (err) {
       httpResponse.status(500).send({msg: 'failed to remove flow'});
       throw err;
@@ -242,7 +252,7 @@ app.put('/v1/flow/:flowid', function (httpRequest, httpResponse) {
       httpResponse.status(404).send({msg: 'given flow is unknown'});
       return;
     }
-    addFlow(flowHeaders, flowData, function(err) {
+    addFlow(flowHeader, flowData, function(err) {
       if (err) {
         httpResponse.status(500).send({msg: 'failed to insert data'});
         throw err;
@@ -257,16 +267,17 @@ app.put('/v1/flow/:flowid', function (httpRequest, httpResponse) {
 //
 // DELETE handler - single version
 //
-app.delete('/v1/flow/:flowid', function (req, res) {
-  deleteFlow(req.params.flowid, function(err, nRemoved) {
+app.delete('/v1/flow/:flowid', function (httpRequest, httpResponse) {
+  var flowHeader = extractFiwareHeaders(httpRequest.headers);
+  deleteFlow(flowHeader, httpRequest.params.flowid, function(err, nRemoved) {
     if (err) {
-      res.status(500).send({msg: 'failed to remove flow'});
+      httpResponse.status(500).send({msg: 'failed to remove flow'});
       throw err;
     }
     if (nRemoved === 0) {
-      res.status(404).send({msg: 'given flow is unknown'});
+      httpResponse.status(404).send({msg: 'given flow is unknown'});
     }
-    res.status(200).send({msg: 'flow removed', id: req.params.flowid});
+    httpResponse.status(200).send({msg: 'flow removed', id: httpRequest.params.flowid});
   })
 })
 
