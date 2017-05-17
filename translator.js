@@ -24,6 +24,7 @@ NodeRed = {
     "gt": ">",
     "gte": ">=",
     "btwn": "between",
+    "else": "else"
     /*
     - not yet -
     "cont" : "contains",
@@ -31,7 +32,26 @@ NodeRed = {
     "true" : "1",
     "false" : "0",
     "null" : "null",
-    "nnull" : "!null"
+    "nnull" : "!null",
+    */
+  },
+  NegatedLogicalOperators: {
+    "eq": "!=",
+    "neq": "=",
+    "lt": ">=",
+    "lte": ">",
+    "gt": "<=",
+    "gte": "<",
+    "btwn": ""
+    /*
+    - not yet -
+    "cont" : "contains",
+    "regex" : "regex",
+    "true" : "1",
+    "false" : "0",
+    "null" : "null",
+    "nnull" : "!null",
+    "else" : ""
     */
   },
   ValueTypes: {
@@ -106,13 +126,10 @@ function generateCastFromValueType(property, nodeRedType) {
   switch (nodeRedType) {
     case NodeRed.ValueTypes.FLOAT:
       return 'cast(cast(' + property + ', String), float)';
-      break;
     case NodeRed.ValueTypes.STRING:
       return 'cast(' + property + ', String)';
-      break;
     case NodeRed.ValueTypes.BOOL:
       return 'cast(cast(' + property + ', String), int)';
-      break;
     default:
       return 'cast(' + property + ', String)';
   }
@@ -122,7 +139,6 @@ function convertNodeRedValueType(type) {
   switch (type) {
     case NodeRed.ValueTypes.FLOAT:
       return 'float';
-      break;
     case NodeRed.ValueTypes.STRING:
       return 'string';
     default:
@@ -164,6 +180,58 @@ function addFilter(node, ruleOperation, ruleValue, ruleType, request) {
 
   // TODO Change this to a proper comparison condition test, such as attribute > value
   request.inputDevice.attributes.push(nodeProperty);
+}
+
+
+/**
+ * Generated a negated set of checks based on a list of rules.
+ * All the rules are concatenated with AND operator. This function should be
+ * used when dealing with 'otherwise' test keywords.
+ * @param {Array} rules Set of rules with tags v (value), vt (value type) and t
+ * operation type)
+ * @param {Array} filters List of strings containing the current rules
+ */
+function generateNegatedRules(property, rules, filters) {
+  var ruleOperation = undefined;
+  var ruleValue = undefined;
+  var ruleType = undefined;
+
+  var nodeProperty = undefined;
+  var nodePropertyWithCast = undefined;
+
+  var rule = undefined;
+  var filter = '';
+
+  for (currRule in rules) {
+    ruleOperation = rules[currRule].t;
+
+    // If there is an opposite operator for this one.
+    if (ruleOperation in NodeRed.NegatedLogicalOperators) {
+      ruleValue = rules[currRule].v;
+      ruleType = rules[currRule].vt;
+      nodeProperty = trimProperty(property, '.');
+      nodePropertyWithCast = generateCastFromValueType(nodeProperty + '?', ruleType);
+
+      switch (ruleOperation) {
+        case 'btwn':
+          // Normally, this should be >= and <
+          rule = nodePropertyWithCast + ' ' + NodeRed.LogicalOperators['lt'] + ' ' + ruleValue;
+          ruleValue = rules[currRule].v2;
+          rule += ' and ' + nodePropertyWithCast + ' ' + NodeRed.LogicalOperators['gte'] + ' ' + ruleValue;
+          break;
+        default:
+          rule = nodePropertyWithCast + ' ' + NodeRed.NegatedLogicalOperators[ruleOperation] + ' ' + ruleValue;
+      }
+
+      // Very first part of this negated rule.
+      if (filter.len == 0) {
+        filter = rule;
+      } else {
+        filter += ' and ' + rule;
+      }
+    }
+  }
+  filters.push(filter);
 }
 
 /**
@@ -228,15 +296,20 @@ function extractDataFromNode(objects, node, request, deviceType, deviceName) {
           var requestClone = cloneRequest(request);
           ruleValue = node.rules[wireset].v;
           ruleType = node.rules[wireset].vt;
-          if (ruleOperation == 'btwn') {
-            ruleOperation = 'gte';
-            addFilter(node, ruleOperation, ruleValue, ruleType, requestClone);
-            ruleOperation = 'lte';
-            ruleValue = node.rules[wireset].v2;
-            ruleType = node.rules[wireset].v2t;
-            addFilter(node, ruleOperation, ruleValue, ruleType, requestClone);
-          } else {
-            addFilter(node, ruleOperation, ruleValue, ruleType, requestClone);
+          switch (ruleOperation) {
+            case 'btwn':
+              ruleOperation = 'gte';
+              addFilter(node, ruleOperation, ruleValue, ruleType, requestClone);
+              ruleOperation = 'lt';
+              ruleValue = node.rules[wireset].v2;
+              ruleType = node.rules[wireset].v2t;
+              addFilter(node, ruleOperation, ruleValue, ruleType, requestClone);
+              break;
+            case 'else':
+              generateNegatedRules(node.property, node.rules, requestClone.pattern.otherFilters);
+              break;
+            default:
+              addFilter(node, ruleOperation, ruleValue, ruleType, requestClone);
           }
           requestClone.pattern.type = deviceType;
           for (var wire = 0; wire < node.wires[wireset].length; wire++) {
