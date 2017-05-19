@@ -176,7 +176,7 @@ function addFilter(node, ruleOperation, ruleValue, ruleType, request) {
   // As this is a 'dynamic' property for perseo, it must end with a question mark.
   var nodeProperty = trimProperty(node.property, '.');
   var nodePropertyWithCast = generateCastFromValueType(nodeProperty + '?', ruleType);
-  request.pattern.otherFilters.push(nodePropertyWithCast + ' ' + NodeRed.LogicalOperators[ruleOperation] + ' ' + ruleValue);
+  request.pattern.otherFilters.push(' and (' + nodePropertyWithCast + ' ' + NodeRed.LogicalOperators[ruleOperation] + ' ' + ruleValue + ')');
 
   // TODO Change this to a proper comparison condition test, such as attribute > value
   request.inputDevice.attributes.push(nodeProperty);
@@ -212,15 +212,17 @@ function generateNegatedRules(property, rules, filters) {
       nodeProperty = trimProperty(property, '.');
       nodePropertyWithCast = generateCastFromValueType(nodeProperty + '?', ruleType);
 
+      // Remember: all verifications are preceded by at least device ID (automatically added when
+      // building the final perseo request.
       switch (ruleOperation) {
         case 'btwn':
           // Normally, this should be >= and <
           rule = nodePropertyWithCast + ' ' + NodeRed.LogicalOperators['lt'] + ' ' + ruleValue;
           ruleValue = rules[currRule].v2;
-          rule += ' and ' + nodePropertyWithCast + ' ' + NodeRed.LogicalOperators['gte'] + ' ' + ruleValue;
+          rule += ' (' + nodePropertyWithCast + ' ' + NodeRed.LogicalOperators['gte'] + ' ' + ruleValue + ')';
           break;
         default:
-          rule = nodePropertyWithCast + ' ' + NodeRed.NegatedLogicalOperators[ruleOperation] + ' ' + ruleValue;
+          rule = ' (' + nodePropertyWithCast + ' ' + NodeRed.NegatedLogicalOperators[ruleOperation] + ' ' + ruleValue + ')';
       }
 
       // Very first part of this negated rule.
@@ -426,7 +428,7 @@ function transformToPerseoRequest(mashupId, requests, currSize) {
     perseoRequest['text'] += 'every ev = iotEvent(';
     perseoRequest['text'] += 'id = \"' + requests[i].pattern.type + '\" ';
     for (var filter = 0; filter < requests[i].pattern.otherFilters.length; filter++) {
-      perseoRequest['text'] += 'and ' + requests[i].pattern.otherFilters[filter] + ' ';
+      perseoRequest['text'] += requests[i].pattern.otherFilters[filter] + ' ';
     }
     perseoRequest['text'] += ')]';
     perseoRequest['action'] = requests[i].action;
