@@ -48,6 +48,31 @@ function perseoCallback(error, response, body) {
  * @param {*} response
  * @param {*} body
  */
+
+function orionSubsUpdateCallback(err,doc) {
+  if (err) {
+    throw err;
+  }
+}
+function orionSubscriptionCallback(flowHeader, flowId, error, response, body) {
+  if (!error && response.statusCode == 200) {
+    let subscriptionId = body.subscribeResponse.subscriptionId;
+    let filter = {service: flowHeader['Fiware-Service'], id: flowId};
+    let updateOperation =  { $push: {"orion_subscriptions": subscriptionId} };
+    col.findOneAndUpdate(filter, updateOperation, {new: true}, orionSubsUpdateCallback);
+  } else {
+    if (error) {
+      console.log(error);
+    }
+  }
+}
+
+/**
+ * Callback function to orion HTTP requests
+ * @param {*} error
+ * @param {*} response
+ * @param {*} body
+ */
 function orionCallback(error, response, body) {
   if (!error && response.statusCode == 200) {
     console.log(util.inspect(body, {showHidden: false, depth: null}));
@@ -124,7 +149,9 @@ function addFlow(flowHeader, flowData, callback) {
     // Send the requests
     for (var i = 0; i < flowRequests.orionSubscriptions.length; i++) {
       let flowRequest = flowRequests.orionSubscriptions[i];
-      request.post({url: config.orion.url + '/subscribeContext/', json: flowRequest, headers: flowHeader}, orionCallback);
+      request.post({url: config.orion.url + '/subscribeContext/', json: flowRequest, headers: flowHeader}, function(error, response, body) {
+        orionSubscriptionCallback(flowHeader, flowData.id, error, response, body);
+      });
     }
   }
 
@@ -149,6 +176,11 @@ function deleteFlow(flowHeader, flowid, callback) {
         let flowId = flow.perseoRules.rules[i];
         let flowHeader = flow.perseoRules.headers;
         request.delete({url: config.perseo_fe.url + "/rules/" + flowId, headers: flowHeader}, perseoCallback);
+      }
+      for (var i = 0; i < flow.orion_subscriptions.length; i++) {
+        // Same headers as perseo stuff
+        let flowHeader = flow.perseoRules.headers;
+        request.post({url: config.orion.url + '/unsubscribeContext/', json: {subscriptionId: flow.orion_subscriptions[i]}, headers: flowHeader}, orionCallback);
       }
       col.remove({id: flowid}, null, function(err, nRemoved) {
         callback(err, nRemoved);
@@ -209,6 +241,12 @@ app.delete('/v1/flow', function (httpRequest, httpResponse) {
       let flowId = flowData.perseoRules.rules[i];
       let flowHeader = flowData.perseoRules.headers;
       request.delete({url: config.perseo_fe.url + "/rules/" + flowId, headers: flowHeader}, perseoCallback);
+    }
+
+    for (var i = 0; i < flowData.orion_subscriptions.length; i++) {
+      // Same headers as perseo stuff
+      let flowHeader = flowData.perseoRules.headers;
+      request.post({url: config.orion.url + '/unsubscribeContext/', json: {subscriptionId: flowData.orion_subscriptions[i]}, headers: flowHeader}, orionCallback);
     }
   });
   col.remove();

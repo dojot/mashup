@@ -475,8 +475,8 @@ function transformToOrionRequest(requests) {
  * @returns {Array} An array of objects containing the properly transformed
  * requests.
  */
-function transformToOrionSubscriptions(requests) {
-  orionSubscriptions = [];
+function transformToOrionSubscriptions(requests, subscribedVariables) {
+  let orionSubscriptions = [];
   for (var i = 0; i < requests.length; i++) {
     // Perseo subscription requests.
     orionSubscription = {};
@@ -491,15 +491,20 @@ function transformToOrionSubscriptions(requests) {
 
     // One request per attribute
     for (var j = 0; j < requests[i].inputDevice.attributes.length; j++) {
-      let orionSubscriptionClone = cloneRequest(orionSubscription);
-      orionSubscriptionClone.attributes = [ requests[i].inputDevice.attributes[i] ];
-      orionSubscriptionClone.notifyConditions = [ {
-        "type" : "ONCHANGE",
-        "condValues" : [
-          requests[i].inputDevice.attributes[i]
-        ]
-      }];
-      orionSubscriptions.push(orionSubscriptionClone);
+      let subscribedVariable = '' + requests[i].inputDevice.id + ':' + requests[i].inputDevice.attributes[j];
+      // If this exact variable has already a subscription, there is no need to do it again
+      if (subscribedVariables.find(function(str) { return str === subscribedVariable}) == undefined) {
+        subscribedVariables.push(subscribedVariable);
+        let orionSubscriptionClone = cloneRequest(orionSubscription);
+        orionSubscriptionClone.attributes = [ requests[i].inputDevice.attributes[j] ];
+        orionSubscriptionClone.notifyConditions = [ {
+          "type" : "ONCHANGE",
+          "condValues" : [
+            requests[i].inputDevice.attributes[j]
+          ]
+        }];
+        orionSubscriptions.push(orionSubscriptionClone);
+      }
     }
   }
   return orionSubscriptions;
@@ -521,11 +526,15 @@ function translateMashup(mashupJson) {
   var tempResults = [];
   var objects = {};
 
+  // Record of which variables already have a subscription.
+  var subscribedVariables = [];
+
   //var boxes = JSON.parse(mashupJson);
   var boxes = mashupJson;
   for (var i = 0; i < boxes.length; i++) {
     objects[boxes[i].id] = boxes[i];
   }
+
 
   for (var id in objects) {
     if (objects[id].type == 'device out') {
@@ -533,7 +542,7 @@ function translateMashup(mashupJson) {
       var requests = extractDataFromNode(objects, objects[id], perseoRequest, objects[id].device);
       let perseoRequests = transformToPerseoRequest(objects[id].z, requests, perseoResults.length);
       let orionRequests = transformToOrionRequest(requests);
-      let orionSubscriptions = transformToOrionSubscriptions(requests);
+      let orionSubscriptions = transformToOrionSubscriptions(requests, subscribedVariables);
 
       tempResults = perseoResults.concat(perseoRequests);
       perseoResults = tempResults;
