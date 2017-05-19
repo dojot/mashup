@@ -276,8 +276,9 @@ app.delete('/v1/flow/:flowid', function (httpRequest, httpResponse) {
     }
     if (nRemoved === 0) {
       httpResponse.status(404).send({msg: 'given flow is unknown'});
+    } else {
+      httpResponse.status(200).send({msg: 'flow removed', id: httpRequest.params.flowid});
     }
-    httpResponse.status(200).send({msg: 'flow removed', id: httpRequest.params.flowid});
   })
 })
 
