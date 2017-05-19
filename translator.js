@@ -403,7 +403,7 @@ function extractDataFromNode(objects, node, request, deviceType, deviceName) {
  * @returns {PerseoRequest} An array of objects containing the properly transformed
  * requests.
  */
-function transformToPerseoRequest(mashupId, requests) {
+function transformToPerseoRequest(mashupId, requests, currSize) {
   perseoRequests = [];
 
   for (var i = 0; i < requests.length; i++) {
@@ -411,7 +411,7 @@ function transformToPerseoRequest(mashupId, requests) {
 
     // Change the mashupId dots to a underscore - perseo doesn't allow rule
     // names with dots.
-    var ruleName = "rule_" + mashupId.replace(".", "_") + "_" + (i + 1);
+    var ruleName = "rule_" + mashupId.replace(".", "_") + "_" + (i + 1 + currSize);
 
     perseoRequest['name'] = ruleName;
     perseoRequest['text'] = 'select *';
@@ -529,7 +529,7 @@ function translateMashup(mashupJson) {
     if (objects[id].type == 'device out') {
       var perseoRequest = cloneRequest(requestTemplate);
       var requests = extractDataFromNode(objects, objects[id], perseoRequest, objects[id].device);
-      let perseoRequests = transformToPerseoRequest(objects[id].z, requests);
+      let perseoRequests = transformToPerseoRequest(objects[id].z, requests, perseoResults.length);
       let orionRequests = transformToOrionRequest(requests);
       let orionSubscriptions = transformToOrionSubscriptions(requests);
 
