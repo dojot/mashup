@@ -176,7 +176,8 @@ function addFilter(node, ruleOperation, ruleValue, ruleType, request) {
   // As this is a 'dynamic' property for perseo, it must end with a question mark.
   var nodeProperty = trimProperty(node.property, '.');
   var nodePropertyWithCast = generateCastFromValueType(nodeProperty + '?', ruleType);
-  request.pattern.otherFilters.push(' and (' + nodePropertyWithCast + ' ' + NodeRed.LogicalOperators[ruleOperation] + ' ' + ruleValue + ')');
+  var ruleValueWithCast = generateCastFromValueType('\"' + ruleValue + '\"', ruleType);
+  request.pattern.otherFilters.push(' and (' + nodePropertyWithCast + ' ' + NodeRed.LogicalOperators[ruleOperation] + ' ' + ruleValueWithCast + ')');
 
   // TODO Change this to a proper comparison condition test, such as attribute > value
   request.inputDevice.attributes.push(nodeProperty);
@@ -199,6 +200,7 @@ function generateNegatedRules(property, rules, filters) {
   var nodeProperty = undefined;
   var nodePropertyWithCast = undefined;
 
+
   var rule = undefined;
   var filter = '';
 
@@ -207,7 +209,7 @@ function generateNegatedRules(property, rules, filters) {
 
     // If there is an opposite operator for this one.
     if (ruleOperation in NodeRed.NegatedLogicalOperators) {
-      ruleValue = rules[currRule].v;
+      ruleValue = generateCastFromValueType('\"' + rules[currRule].v + '\"', ruleType);
       ruleType = rules[currRule].vt;
       nodeProperty = trimProperty(property, '.');
       nodePropertyWithCast = generateCastFromValueType(nodeProperty + '?', ruleType);
@@ -218,7 +220,7 @@ function generateNegatedRules(property, rules, filters) {
         case 'btwn':
           // Normally, this should be >= and <
           rule = nodePropertyWithCast + ' ' + NodeRed.LogicalOperators['lt'] + ' ' + ruleValue;
-          ruleValue = rules[currRule].v2;
+          ruleValue = generateCastFromValueType('\"' + rules[currRule].v2 + '\"', ruleType);
           rule += ' (' + nodePropertyWithCast + ' ' + NodeRed.LogicalOperators['gte'] + ' ' + ruleValue + ')';
           break;
         default:
