@@ -54,6 +54,32 @@ function orionSubsUpdateCallback(err,doc) {
     throw err;
   }
 }
+
+function orionGeoRefSubscriptionCallback(flowHeader, flowId, relatedPerseoRequests, error, response, body) {
+  if (!error && response.statusCode == 201) {
+    let location = response.headers.location;
+    var indexId = location.lastIndexOf('/');
+    let subscriptionId = location.slice(indexId + 1);
+    let filter = {service: flowHeader['Fiware-Service'], id: flowId};
+    let updateOperation =  { $push: {"orion_subscriptions_v2": subscriptionId} };
+    col.findOneAndUpdate(filter, updateOperation, {new: true}, orionSubsUpdateCallback);
+
+    let perseoRequests = translator.doGeoRefPostTranslation(relatedPerseoRequests, subscriptionId);
+
+    // Once this subscription is created, let's create all rules with this subscriptionId
+    for (var i = 0; i < perseoRequests.length; i++) {
+      let flowRequest = perseoRequests[i];
+      request.post({url: config.perseo_fe.url + '/rules', json: flowRequest, headers: flowHeader}, perseoCallback);
+    }
+
+  } else {
+    if (error) {
+      console.log(error);
+    }
+  }
+}
+
+
 function orionSubscriptionCallback(flowHeader, flowId, error, response, body) {
   if (!error && response.statusCode == 200) {
     let subscriptionId = body.subscribeResponse.subscriptionId;
@@ -141,7 +167,7 @@ function addFlow(flowHeader, flowData, callback) {
     // Send the requests
     for (var i = 0; i < flowRequests.orionRequests.length; i++) {
       let flowRequest = flowRequests.orionRequests[i];
-      request.post({url: config.orion.url + '/updateContext/', json: flowRequest, headers: flowHeader}, orionCallback);
+      request.post({url: config.orion.url + '/v1/updateContext/', json: flowRequest, headers: flowHeader}, orionCallback);
     }
   }
 
@@ -149,12 +175,29 @@ function addFlow(flowHeader, flowData, callback) {
     // Send the requests
     for (var i = 0; i < flowRequests.orionSubscriptions.length; i++) {
       let flowRequest = flowRequests.orionSubscriptions[i];
-      request.post({url: config.orion.url + '/subscribeContext/', json: flowRequest, headers: flowHeader}, function(error, response, body) {
+      request.post({url: config.orion.url + '/v1/subscribeContext/', json: flowRequest, headers: flowHeader}, function(error, response, body) {
         orionSubscriptionCallback(flowHeader, flowData.id, error, response, body);
       });
     }
   }
 
+
+  if ('orionGeoRefSubscriptions' in flowRequests) {
+    // Send the requests
+    for (var i = 0; i < flowRequests.orionGeoRefSubscriptions.length; i++) {
+      let geoRefData = flowRequests.orionGeoRefSubscriptions[i];
+      let flowRequest = geoRefData.subscription;
+      // Update flowData perseo rule names - adding those rules that are not yet
+      // created
+      for (let ruleIx = 0; ruleIx < geoRefData.relatedPerseoRequests.length; ruleIx++) {
+        flowData.perseoRules.rules.push(geoRefData.relatedPerseoRequests[ruleIx].name);
+      }
+
+      request.post({url: config.orion.url + '/v2/subscriptions/', json: flowRequest, headers: flowHeader}, function(error, response, body) {
+        orionGeoRefSubscriptionCallback(flowHeader, flowData.id, geoRefData.relatedPerseoRequests, error, response, body);
+      });
+    }
+  }
   col.insertOne(flowData, function(err, result) {
     callback(err);
     return;
@@ -170,18 +213,34 @@ function deleteFlow(flowHeader, flowid, callback) {
       return;
     }
 
-    // Remove all perseo rules related to this flow
     if (flow != null) {
-      for (var i = 0; i < flow.perseoRules.rules.length; i++) {
-        let flowId = flow.perseoRules.rules[i];
-        let flowHeader = flow.perseoRules.headers;
-        request.delete({url: config.perseo_fe.url + "/rules/" + flowId, headers: flowHeader}, perseoCallback);
+      // Remove all perseo rules related to this flow
+      if (flow.perseoRules != undefined) {
+        for (var i = 0; i < flow.perseoRules.rules.length; i++) {
+          let flowId = flow.perseoRules.rules[i];
+          let flowHeader = flow.perseoRules.headers;
+          request.delete({url: config.perseo_fe.url + "/rules/" + flowId, headers: flowHeader}, perseoCallback);
+        }
       }
-      for (var i = 0; i < flow.orion_subscriptions.length; i++) {
-        // Same headers as perseo stuff
-        let flowHeader = flow.perseoRules.headers;
-        request.post({url: config.orion.url + '/unsubscribeContext/', json: {subscriptionId: flow.orion_subscriptions[i]}, headers: flowHeader}, orionCallback);
+
+      // Remove all subscription in orion - version 1
+      if (flow.orion_subscriptions != undefined) {
+        for (var i = 0; i < flow.orion_subscriptions.length; i++) {
+          // Same headers as perseo stuff
+          let flowHeader = flow.perseoRules.headers;
+          request.post({url: config.orion.url + '/v1/unsubscribeContext/', json: {subscriptionId: flow.orion_subscriptions[i]}, headers: flowHeader}, orionCallback);
+        }
       }
+
+      // Remove all subscription in orion - version 2
+      if (flow.orion_subscriptions_v2 != undefined) {
+        for (var i = 0; i < flow.orion_subscriptions_v2.length; i++) {
+          // Same headers as perseo stuff
+          let flowHeader = flow.perseoRules.headers;
+          request.delete({url: config.orion.url + '/v2/subscriptions/' + flow.orion_subscriptions_v2[i], headers: flowHeader}, orionCallback);
+        }
+      }
+
       col.remove({id: flowid}, null, function(err, nRemoved) {
         callback(err, nRemoved);
         return;
@@ -246,8 +305,17 @@ app.delete('/v1/flow', function (httpRequest, httpResponse) {
     for (var i = 0; i < flowData.orion_subscriptions.length; i++) {
       // Same headers as perseo stuff
       let flowHeader = flowData.perseoRules.headers;
-      request.post({url: config.orion.url + '/unsubscribeContext/', json: {subscriptionId: flowData.orion_subscriptions[i]}, headers: flowHeader}, orionCallback);
+      request.post({url: config.orion.url + '/v1/unsubscribeContext/', json: {subscriptionId: flowData.orion_subscriptions[i]}, headers: flowHeader}, orionCallback);
     }
+
+    // Remove all subscription in orion - version 2
+    for (var i = 0; i < flowData.orion_subscriptions_v2.length; i++) {
+      // Same headers as perseo stuff
+      let flowHeader = flowData.perseoRules.headers;
+      request.delete({url: config.orion.url + '/v2/subscriptions/' + flowData.orion_subscriptions_v2[i], headers: flowHeader}, orionCallback);
+    }
+
+
   });
   col.remove();
   httpResponse.status(200).send({msg: 'all flows removed'})
