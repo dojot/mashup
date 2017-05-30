@@ -277,8 +277,8 @@ function generateNegatedRules(property, rules, filters) {
 
     // If there is an opposite operator for this one.
     if (ruleOperation in NodeRed.NegatedLogicalOperators) {
-      ruleValue = generateCastFromValueType('\"' + rules[currRule].v + '\"', ruleType);
       ruleType = rules[currRule].vt;
+      ruleValue = generateCastFromValueType('\"' + rules[currRule].v + '\"', ruleType);
       nodeProperty = trimProperty(property, '.');
       nodePropertyWithCast = generateCastFromValueType(nodeProperty + '?', ruleType);
 
