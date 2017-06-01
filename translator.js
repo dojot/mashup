@@ -18,7 +18,8 @@ NodeRed = {
     CHANGE: 'change',
     HTTP_REQUEST: 'http request',
     TEMPLATE: 'template',
-    GEOFENCE: 'geofence'
+    GEOFENCE: 'geofence',
+    EMAIL: 'e-mail'
   },
   LogicalOperators: {
     "eq": "=",
@@ -91,7 +92,8 @@ OrionTypes = {
 PerseoTypes = {
   ActionType: {
     UPDATE: 'update',
-    POST: 'post'
+    POST: 'post',
+    EMAIL: 'email'
   }
 }
 
@@ -492,6 +494,17 @@ function extractDataFromNode(objects, node, request, deviceType, deviceName) {
           tempResults = perseoRequestResults;
         }
       }
+      break;
+    case NodeRed.NodeType.EMAIL:
+      request.action.type = PerseoTypes.ActionType.EMAIL;
+      request.action.template = 'Your device was desintegrated. <b>Check your system administrator for support</b>.'
+      request.action.parameters = {
+        "to": node.name,
+        "from": "super-middleware@cpqd.com.br",
+        "subject": "device notification",
+        "smtp" : node.server
+      };
+      perseoRequestResults.push(request);
       break;
   }
   return perseoRequestResults;
