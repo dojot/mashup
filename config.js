@@ -5,7 +5,7 @@ config.perseo_fe = {
 }
 
 config.orion = {
-  url: 'http://orion:1026/v1',
+  url: 'http://orion:1026',
   default_subscription_duration : "P1M"
 }
 
