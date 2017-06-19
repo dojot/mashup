@@ -497,11 +497,10 @@ function extractDataFromNode(objects, node, request, deviceType, deviceName) {
       break;
     case NodeRed.NodeType.EMAIL:
       request.action.type = PerseoTypes.ActionType.EMAIL;
-      request.action.template = 'Your device was desintegrated. <b>Check your system administrator for support</b>.'
       request.action.parameters = {
-        "to": node.name,
-        "from": "super-middleware@cpqd.com.br",
-        "subject": "device notification",
+        "to": node.to,
+        "from": node.from,
+        "subject": node.subject,
         "smtp" : node.server
       };
       perseoRequestResults.push(request);
