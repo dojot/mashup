@@ -636,6 +636,7 @@ function transformToOrionSubscriptions(requests, subscribedVariables) {
             requests[i].inputDevice.attributes[j]
           ]
         }];
+        orionSubscriptionClone.duration = "P100Y"; // 100 years subscription.
         orionSubscriptions.push(orionSubscriptionClone);
       }
     }
@@ -683,6 +684,8 @@ function transformToOrionGeoRefSubscriptions(requests, subscribedVariables) {
 
       orionSubscription.subscription.subject.condition.expression = requests[i].condition.expression;
       orionSubscription.subscription.notification.http.url = config.perseo_fe.url + "/noticesv2";
+
+      // v2 subscriptions don't need duration specification.
 
       // These perseo rules need an extra "and subscriptionId == XYZ" filter. This value will
       // only be available after creating the subscription. We will save them with the georef
