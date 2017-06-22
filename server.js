@@ -55,7 +55,7 @@ function orionSubsUpdateCallback(err,doc) {
   }
 }
 
-function orionGeoRefSubscriptionCallback(flowHeader, flowId, relatedPerseoRequests, error, response, body) {
+function orionGeoRefSubscriptionCallback(flowHeader, flowId, originalRequest, type, error, response, body) {
   if (!error && response.statusCode == 201) {
     let location = response.headers.location;
     var indexId = location.lastIndexOf('/');
@@ -64,12 +64,11 @@ function orionGeoRefSubscriptionCallback(flowHeader, flowId, relatedPerseoReques
     let updateOperation =  { $push: {"orion_subscriptions_v2": subscriptionId} };
     col.findOneAndUpdate(filter, updateOperation, {new: true}, orionSubsUpdateCallback);
 
-    let perseoRequests = translator.doGeoRefPostTranslation(relatedPerseoRequests, subscriptionId);
+    let perseoRequest = translator.doGeoRefPostTranslation(originalRequest, subscriptionId, type);
 
     // Once this subscription is created, let's create all rules with this subscriptionId
-    for (var i = 0; i < perseoRequests.length; i++) {
-      let flowRequest = perseoRequests[i];
-      request.post({url: config.perseo_fe.url + '/rules', json: flowRequest, headers: flowHeader}, perseoCallback);
+    if (perseoRequest != null) {
+      request.post({url: config.perseo_fe.url + '/rules', json: perseoRequest, headers: flowHeader}, perseoCallback);
     }
 
   } else {
@@ -189,12 +188,9 @@ function addFlow(flowHeader, flowData, callback) {
       let flowRequest = geoRefData.subscription;
       // Update flowData perseo rule names - adding those rules that are not yet
       // created
-      for (let ruleIx = 0; ruleIx < geoRefData.relatedPerseoRequests.length; ruleIx++) {
-        flowData.perseoRules.rules.push(geoRefData.relatedPerseoRequests[ruleIx].name);
-      }
-
+      flowData.perseoRules.rules.push(geoRefData.originalRequest.name);
       request.post({url: config.orion.url + '/v2/subscriptions/', json: flowRequest, headers: flowHeader}, function(error, response, body) {
-        orionGeoRefSubscriptionCallback(flowHeader, flowData.id, geoRefData.relatedPerseoRequests, error, response, body);
+        orionGeoRefSubscriptionCallback(flowHeader, flowData.id, geoRefData.originalRequest, geoRefData.subscriptionType, error, response, body);
       });
     }
   }

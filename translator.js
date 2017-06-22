@@ -118,7 +118,8 @@ var requestTemplate = {
   "variables": [],
   "pattern": {
     "type": "",
-    "otherFilters": []
+    "otherFilters": [],
+    "otherFiltersSeq": []
   },
   "action": {
     "type": "",
@@ -136,13 +137,37 @@ var requestTemplate = {
     "attributes": []
   },
   "condition": {
-    "expression" : {},
-    "relatedPerseoRequests": []
+    "expression" : {}
+  },
+  "geoRefEdges": {
+    "expression-from" : {},
+    "expression-to" : {},
+    "fromSubscriptionId" : "",
+    "toSubscriptionId" : ""
   },
   "flags": {
-    "hasGeoRef" : false
+    "hasGeoRef" : false,
+    "hasGeoRefEdges": false,
+    "hasEdges" : false
   }
 };
+
+function buildGeoRefExpression(node, type) {
+  let expression = {};
+  expression.georel = type;
+
+  if (node.mode == NodeRed.GeoFenceMode.POLYLINE) {
+    expression.geometry = OrionTypes.GeoFenceMode.POLYGON;
+    expression.coords = "";
+    for (var i = 0; i < node.points.length; i++) {
+      let point = node.points[i];
+      expression.coords += point.latitude + ',' + point.longitude + ';';
+    }
+    // Closing the polygon
+    expression.coords += node.points[0].latitude + ',' + node.points[0].longitude;
+  }
+  return expression;
+}
 
 /**
  * Wrapper that performs a deep copy of an object
@@ -244,6 +269,18 @@ function addFilter(node, ruleOperation, ruleValue, ruleType, request) {
   // TODO Change this to a proper comparison condition test, such as attribute > value
   request.inputDevice.attributes.push(nodeProperty);
 }
+
+function addFilterSeq(node, ruleOperation, ruleValue, ruleType, request) {
+  // As this is a 'dynamic' property for perseo, it must end with a question mark.
+  var nodeProperty = trimProperty(node.property, '.');
+  var nodePropertyWithCast = generateCastFromValueType(nodeProperty + '?', ruleType);
+  var ruleValueWithCast = generateCastFromValueType('\"' + ruleValue + '\"', ruleType);
+  request.pattern.otherFiltersSeq.push(' and (' + nodePropertyWithCast + ' ' + NodeRed.LogicalOperators[ruleOperation] + ' ' + ruleValueWithCast + ')');
+
+  // TODO Change this to a proper comparison condition test, such as attribute > value
+  request.inputDevice.attributes.push(nodeProperty);
+}
+
 
 
 /**
@@ -384,6 +421,18 @@ function extractDataFromNode(objects, node, request, deviceType, deviceName) {
             case 'else':
               generateNegatedRules(node.property, node.rules, requestClone.pattern.otherFilters);
               break;
+            case 'edge-up':
+              ruleOperation = 'lt';
+              addFilter(node, ruleOperation, ruleValue, ruleType, requestClone);
+              ruleOperation = 'gte';
+              addFilterSeq(node, ruleOperation, ruleValue, ruleType, requestClone);
+            break;
+            case 'edge-down':
+              ruleOperation = 'gte';
+              addFilter(node, ruleOperation, ruleValue, ruleType, requestClone);
+              ruleOperation = 'lt';
+              addFilterSeq(node, ruleOperation, ruleValue, ruleType, requestClone);
+            break;
             default:
               addFilter(node, ruleOperation, ruleValue, ruleType, requestClone);
           }
@@ -397,24 +446,24 @@ function extractDataFromNode(objects, node, request, deviceType, deviceName) {
       }
       break;
     case NodeRed.NodeType.GEOFENCE:
-      if (node.inside == "true") {
-        request.condition.expression.georel = OrionTypes.GeoFenceOperator.COVEREDBY;
-      } else {
-        request.condition.expression.georel = OrionTypes.GeoFenceOperator.DISJOINT;
+      if (node.filter === "inside") {
+        request.flags.hasGeoRef = true;
+        request.condition.expression = buildGeoRefExpression(node, OrionTypes.GeoFenceOperator.COVEREDBY);
+      } else if (node.filter === "outside") {
+        request.flags.hasGeoRef = true;
+        request.condition.expression = buildGeoRefExpression(node, OrionTypes.GeoFenceOperator.DISJOINT);
+      } else if (node.filter === "enters") {
+        request.flags.hasGeoRef = true;
+        request.flags.hasGeoRefEdges = true;
+        request.geoRefEdges['expression-from'] = buildGeoRefExpression(node, OrionTypes.GeoFenceOperator.DISJOINT);
+        request.geoRefEdges['expression-to'] = buildGeoRefExpression(node, OrionTypes.GeoFenceOperator.COVEREDBY);
+      } else if (node.filter === "exits") {
+        request.flags.hasGeoRef = true;
+        request.flags.hasGeoRefEdges = true;
+        request.geoRefEdges['expression-from'] = buildGeoRefExpression(node, OrionTypes.GeoFenceOperator.COVEREDBY);
+        request.geoRefEdges['expression-to'] = buildGeoRefExpression(node, OrionTypes.GeoFenceOperator.DISJOINT);
       }
 
-      if (node.mode == NodeRed.GeoFenceMode.POLYLINE) {
-        request.condition.expression.geometry = OrionTypes.GeoFenceMode.POLYGON;
-        request.condition.expression.coords = "";
-        for (var i = 0; i < node.points.length; i++) {
-          let point = node.points[i];
-          request.condition.expression.coords += point.latitude + ',' + point.longitude + ';';
-        }
-        // Closing the polygon
-        request.condition.expression.coords += node.points[0].latitude + ',' + node.points[0].longitude;
-      }
-
-      request.flags.hasGeoRef = true;
       for (var wireset = 0; wireset < node.wires.length; wireset++) {
         for (var wire = 0; wire < node.wires[wireset].length; wire++) {
           nextNode = objects[node.wires[wireset][wire]];
@@ -564,7 +613,16 @@ function transformToPerseoRequest(request) {
   for (var filter = 0; filter < request.pattern.otherFilters.length; filter++) {
     perseoRequest['text'] += request.pattern.otherFilters[filter] + ' ';
   }
-  perseoRequest['text'] += ')]';
+  perseoRequest['text'] += ')';
+  if (request.flags.hasGeoRefEdges) {
+    perseoRequest['text'] += '-> iotEvent(';
+    perseoRequest['text'] += 'id? = \"' + request.pattern.type + '\" ';
+    for (var filter = 0; filter < request.pattern.otherFiltersSeq.length; filter++) {
+      perseoRequest['text'] += request.pattern.otherFiltersSeq[filter] + ' ';
+    }
+    perseoRequest['text'] += ')';
+  }
+  perseoRequest['text'] += ']';
   perseoRequest['action'] = request.action;
   if (request.action.type == PerseoTypes.ActionType.UPDATE) {
     perseoRequest.action.parameters.id = request.outputDevice.id;
@@ -656,7 +714,7 @@ function transformToOrionSubscriptions(requests, subscribedVariables) {
 function transformToOrionGeoRefSubscriptions(requests, subscribedVariables) {
   let orionSubscriptions = [];
   for (var i = 0; i < requests.length; i++) {
-    if (requests[i].flags.hasGeoRef == true) {
+    if (requests[i].flags.hasGeoRef == true || requests[i].flags.hasGeoRefEdges == true) {
       // Perseo subscription requests.
       let orionSubscription = {
         subscription : {
@@ -674,7 +732,8 @@ function transformToOrionGeoRefSubscriptions(requests, subscribedVariables) {
             attrs: []
           }
         },
-        relatedPerseoRequests: []
+        subscriptionType: "",
+        originalRequest: {}
       };
       orionSubscription.subscription.description = "Geofence subscription for " + requests[i].inputDevice.id;
       orionSubscription.subscription.subject.entities.push( {
@@ -682,16 +741,32 @@ function transformToOrionGeoRefSubscriptions(requests, subscribedVariables) {
         "id" : requests[i].inputDevice.id
       });
 
-      orionSubscription.subscription.subject.condition.expression = requests[i].condition.expression;
-      orionSubscription.subscription.notification.http.url = config.perseo_fe.url + "/noticesv2";
+      if (requests[i].flags.hasGeoRefEdges == true) {
+        let orionSubsClone = cloneRequest(orionSubscription);
+        orionSubsClone.subscription.subject.condition.expression = requests[i].geoRefEdges["expression-from"];
+        orionSubsClone.subscription.notification.http.url = config.perseo_fe.url + "/noticesv2";
+        orionSubsClone.originalRequest = requests[i];
+        orionSubsClone.subscriptionType = "from";
+        orionSubscriptions.push(orionSubsClone);
+        orionSubsClone = cloneRequest(orionSubscription);
+        orionSubsClone.subscription.subject.condition.expression = requests[i].geoRefEdges["expression-to"];
+        orionSubsClone.subscription.notification.http.url = config.perseo_fe.url + "/noticesv2";
+        orionSubsClone.originalRequest = requests[i];
+        orionSubsClone.subscriptionType = "to";
+        orionSubscriptions.push(orionSubsClone);
+      }
 
-      // v2 subscriptions don't need duration specification.
-
-      // These perseo rules need an extra "and subscriptionId == XYZ" filter. This value will
-      // only be available after creating the subscription. We will save them with the georef
-      // subscriptions so that the post-processing request function can be properly executed.
-      orionSubscription.relatedPerseoRequests.push(requests[i]);
-      orionSubscriptions.push(orionSubscription);
+      if (requests[i].flags.hasGeoRef == true && requests[i].flags.hasGeoRefEdges == false) {
+        // v2 subscriptions don't need duration specification.
+        orionSubscription.subscription.subject.condition.expression = requests[i].condition.expression;
+        orionSubscription.subscription.notification.http.url = config.perseo_fe.url + "/noticesv2";
+        // These perseo rules need an extra "and subscriptionId == XYZ" filter. This value will
+        // only be available after creating the subscription. We will save them with the georef
+        // subscriptions so that the post-processing request function can be properly executed.
+        orionSubscription.originalRequest = requests[i];
+        orionSubscription.subscriptionType = "simple";
+        orionSubscriptions.push(orionSubscription);
+      }
     }
   }
   return orionSubscriptions;
@@ -762,25 +837,43 @@ function translateMashup(mashupJson) {
  * all associated rules must be updated so that the orion subscription ID is added to
  * the filter list.
  *
- * @param {Array} relatedPerseoRequests The perseo requests to be modified.
+ * @param {Array} originalRequest the original request.
  * @param {String} subscriptionId The subscription ID to be added
+ * @param {String} type If this is a composite rule, 'from' to indicate the first half, 'to' the second half.
  */
-function doGeoRefPostTranslation(relatedPerseoRequests, subscriptionId) {
-  // TODO Check if changing attributes from an object inside an array actually changes it (not a copy of it)
-  let perseoRequests = []
-  for (let i = 0; i < relatedPerseoRequests.length; i++) {
-    let perseoRequest = relatedPerseoRequests[i];
-    let ruleName = perseoRequest.name;
-
-    // If the only test in this flow is a georef node.
-    if (perseoRequest.pattern.type == "") {
-      perseoRequest.pattern.type = perseoRequest.inputDevice.id;
+function doGeoRefPostTranslation(originalRequest, subscriptionId, type) {
+  let request = originalRequest;
+  if (type == "from" || type == "to") {
+    switch (type) {
+      case "from":
+        request.geoRefEdges.fromSubscriptionId = subscriptionId;
+      break;
+      case "to":
+        request.geoRefEdges.toSubscriptionId = subscriptionId;
+      break;
     }
 
-    addFilter({property : 'subscriptionId'}, 'eq', subscriptionId, NodeRed.ValueTypes.STRING, perseoRequest);
-    perseoRequests.push(transformToPerseoRequest(perseoRequest));
+    if (request.geoRefEdges.fromSubscriptionId != '' && request.geoRefEdges.toSubscriptionId != '') {
+      // If the only test in this flow is a georef node.
+      if (request.pattern.type == "") {
+        request.pattern.type = request.inputDevice.id;
+      }
+      addFilter({property : 'subscriptionId'}, 'eq', request.geoRefEdges.fromSubscriptionId, NodeRed.ValueTypes.STRING, request);
+      addFilterSeq({property : 'subscriptionId'}, 'eq', request.geoRefEdges.toSubscriptionId, NodeRed.ValueTypes.STRING, request);
+
+      return transformToPerseoRequest(originalRequest);
+    } else {
+      return null;
+    }
+  } else {
+    // If the only test in this flow is a georef node.
+    if (request.pattern.type == "") {
+      request.pattern.type = request.inputDevice.id;
+    }
+
+    addFilter({property : 'subscriptionId'}, 'eq', subscriptionId, NodeRed.ValueTypes.STRING, request);
+    return transformToPerseoRequest(originalRequest);
   }
-  return perseoRequests;
 }
 
 exports.translateMashup = translateMashup;
