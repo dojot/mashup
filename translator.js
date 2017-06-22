@@ -19,7 +19,8 @@ NodeRed = {
     HTTP_REQUEST: 'http request',
     TEMPLATE: 'template',
     GEOFENCE: 'geofence',
-    EMAIL: 'e-mail'
+    EMAIL: 'e-mail',
+    EDGEDETECTION: 'edgedetection'
   },
   LogicalOperators: {
     "eq": "=",
@@ -445,6 +446,43 @@ function extractDataFromNode(objects, node, request, deviceType, deviceName) {
         }
       }
       break;
+    case NodeRed.NodeType.EDGEDETECTION:
+      console.log("Found an edge detection node")
+      var ruleOperation = undefined;
+      var ruleValue = undefined;
+      var ruleType = undefined;
+      // Each wireset inherently iterates over rules
+      for (var wireset = 0; wireset < node.wires.length; wireset++) {
+        ruleOperation = node.rules[wireset].t;
+        var requestClone = cloneRequest(request);
+        ruleValue = node.rules[wireset].v;
+        ruleType = node.rules[wireset].vt;
+
+        requestClone.pattern.type = deviceType;
+        switch (ruleOperation) {
+          case 'edge-up':
+            ruleOperation = 'lt';
+            addFilter(node, ruleOperation, ruleValue, ruleType, requestClone);
+            ruleOperation = 'gte';
+            addFilterSeq(node, ruleOperation, ruleValue, ruleType, requestClone);
+            requestClone.flags.hasEdges = true;
+          break;
+          case 'edge-down':
+            ruleOperation = 'gte';
+            addFilter(node, ruleOperation, ruleValue, ruleType, requestClone);
+            ruleOperation = 'lt';
+            addFilterSeq(node, ruleOperation, ruleValue, ruleType, requestClone);
+            requestClone.flags.hasEdges = true;
+          break;
+        }
+        for (var wire = 0; wire < node.wires[wireset].length; wire++) {
+          nextNode = objects[node.wires[wireset][wire]];
+          var result = extractDataFromNode(objects, nextNode, requestClone, deviceType, deviceName);
+          perseoRequestResults = tempResults.concat(result);
+          tempResults = perseoRequestResults;
+        }
+      }
+      break;
     case NodeRed.NodeType.GEOFENCE:
       if (node.filter === "inside") {
         request.flags.hasGeoRef = true;
@@ -614,7 +652,7 @@ function transformToPerseoRequest(request) {
     perseoRequest['text'] += request.pattern.otherFilters[filter] + ' ';
   }
   perseoRequest['text'] += ')';
-  if (request.flags.hasGeoRefEdges) {
+  if (request.flags.hasGeoRefEdges || request.flags.hasEdges) {
     perseoRequest['text'] += '-> iotEvent(';
     perseoRequest['text'] += 'id? = \"' + request.pattern.type + '\" ';
     for (var filter = 0; filter < request.pattern.otherFiltersSeq.length; filter++) {
