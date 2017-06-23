@@ -387,7 +387,7 @@ function extractDataFromNode(objects, node, request, deviceType, deviceName) {
         for (var wire = 0; wire < node.wires[wireset].length; wire++) {
           // Create a new request so that it can be modified by other boxes.
           var requestClone = cloneRequest(request);
-          requestClone.inputDevice.type = 'device';
+          requestClone.inputDevice.type = node._device_type;
           requestClone.inputDevice.id = node._device_id;
           nextNode = objects[node.wires[wireset][wire]];
           var result = extractDataFromNode(objects, nextNode, requestClone, node._device_id, node.name);
