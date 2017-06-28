@@ -157,6 +157,12 @@ function buildGeoRefExpression(node, type) {
   let expression = {};
   expression.georel = type;
 
+  // Sanity checks
+  if (node.mode == undefined || node.points == undefined || (node.points != undefined && node.points.length == 0)) {
+    throw {retCode: 400, msg:"empty georeference node"}
+  }
+
+
   if (node.mode == NodeRed.GeoFenceMode.POLYLINE) {
     expression.geometry = OrionTypes.GeoFenceMode.POLYGON;
     expression.coords = "";

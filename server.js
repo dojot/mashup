@@ -249,7 +249,6 @@ function deleteFlow(flowHeader, flowid, callback) {
   })
 }
 
-
 //
 // GET handler
 //
@@ -277,6 +276,7 @@ app.post('/v1/flow', function (httpRequest, httpResponse) {
     return;
   }
 
+  try {
   addFlow(flowHeader, flowData, function(err) {
     if (err) {
       httpResponse.status(500).send({msg: 'failed to insert data'});
@@ -284,6 +284,9 @@ app.post('/v1/flow', function (httpRequest, httpResponse) {
     }
     httpResponse.status(200).send({msg: 'flow created ', flow: flowData});
   });
+  } catch (err) {
+    httpResponse.status(err.retCode).send({msg: 'error while adding flow: ' + err.msg});
+  }
 })
 
 //
@@ -354,6 +357,8 @@ app.put('/v1/flow/:flowid', function (httpRequest, httpResponse) {
       httpResponse.status(404).send({msg: 'given flow is unknown'});
       return;
     }
+
+    try {
     addFlow(flowHeader, flowData, function(err) {
       if (err) {
         httpResponse.status(500).send({msg: 'failed to insert data'});
@@ -362,6 +367,10 @@ app.put('/v1/flow/:flowid', function (httpRequest, httpResponse) {
       httpResponse.status(200).send({msg: 'flow updated', flow: flowData});
       return;
     });
+    } catch (err) {
+      httpResponse.status(err.retCode).send({msg: 'error while adding flow: ' + err.msg});
+    }
+
   });
 })
 
