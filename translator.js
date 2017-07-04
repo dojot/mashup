@@ -119,6 +119,7 @@ var requestTemplate = {
   "variables": [],
   "pattern": {
     "type": "",
+    "fixedFilters" : [],
     "otherFilters": [],
     "otherFiltersSeq": []
   },
@@ -266,6 +267,18 @@ function extractVariables(template, detectedVariables) {
  * @param {String} ruleType Value type, such as float, integer or String.
  * @param {Object} request The request being built.
  */
+
+function addFixedFilter(node, ruleOperation, ruleValue, ruleType, request) {
+  // As this is a 'dynamic' property for perseo, it must end with a question mark.
+  var nodeProperty = trimProperty(node.property, '.');
+  var nodePropertyWithCast = generateCastFromValueType(nodeProperty + '?', ruleType);
+  var ruleValueWithCast = generateCastFromValueType('\"' + ruleValue + '\"', ruleType);
+  request.pattern.fixedFilters.push(' and (' + nodePropertyWithCast + ' ' + NodeRed.LogicalOperators[ruleOperation] + ' ' + ruleValueWithCast + ')');
+
+  // TODO Change this to a proper comparison condition test, such as attribute > value
+  request.inputDevice.attributes.push(nodeProperty);
+}
+
 function addFilter(node, ruleOperation, ruleValue, ruleType, request) {
   // As this is a 'dynamic' property for perseo, it must end with a question mark.
   var nodeProperty = trimProperty(node.property, '.');
@@ -419,14 +432,14 @@ function extractDataFromNode(objects, node, request, deviceType, deviceName) {
           switch (ruleOperation) {
             case 'btwn':
               ruleOperation = 'gte';
-              addFilter(node, ruleOperation, ruleValue, ruleType, requestClone);
+              addFixedFilter(node, ruleOperation, ruleValue, ruleType, requestClone);
               ruleOperation = 'lt';
               ruleValue = node.rules[wireset].v2;
               ruleType = node.rules[wireset].v2t;
-              addFilter(node, ruleOperation, ruleValue, ruleType, requestClone);
+              addFixedFilter(node, ruleOperation, ruleValue, ruleType, requestClone);
               break;
             case 'else':
-              generateNegatedRules(node.property, node.rules, requestClone.pattern.otherFilters);
+              generateNegatedRules(node.property, node.rules, requestClone.pattern.fixedFilters);
               break;
             case 'edge-up':
               ruleOperation = 'lt';
@@ -441,7 +454,7 @@ function extractDataFromNode(objects, node, request, deviceType, deviceName) {
               addFilterSeq(node, ruleOperation, ruleValue, ruleType, requestClone);
             break;
             default:
-              addFilter(node, ruleOperation, ruleValue, ruleType, requestClone);
+              addFixedFilter(node, ruleOperation, ruleValue, ruleType, requestClone);
           }
           for (var wire = 0; wire < node.wires[wireset].length; wire++) {
             nextNode = objects[node.wires[wireset][wire]];
@@ -654,6 +667,9 @@ function transformToPerseoRequest(request) {
   perseoRequest['text'] += ' from pattern [';
   perseoRequest['text'] += 'every ev = iotEvent(';
   perseoRequest['text'] += 'id? = \"' + request.pattern.type + '\" ';
+  for (var filter = 0; filter < request.pattern.fixedFilters.length; filter++) {
+    perseoRequest['text'] += request.pattern.fixedFilters[filter] + ' ';
+  }
   for (var filter = 0; filter < request.pattern.otherFilters.length; filter++) {
     perseoRequest['text'] += request.pattern.otherFilters[filter] + ' ';
   }
@@ -661,6 +677,9 @@ function transformToPerseoRequest(request) {
   if (request.flags.hasGeoRefEdges || request.flags.hasEdges) {
     perseoRequest['text'] += '-> iotEvent(';
     perseoRequest['text'] += 'id? = \"' + request.pattern.type + '\" ';
+    for (var filter = 0; filter < request.pattern.fixedFilters.length; filter++) {
+      perseoRequest['text'] += request.pattern.fixedFilters[filter] + ' ';
+    }
     for (var filter = 0; filter < request.pattern.otherFiltersSeq.length; filter++) {
       perseoRequest['text'] += request.pattern.otherFiltersSeq[filter] + ' ';
     }
@@ -915,7 +934,7 @@ function doGeoRefPostTranslation(originalRequest, subscriptionId, type) {
       request.pattern.type = request.inputDevice.id;
     }
 
-    addFilter({property : 'subscriptionId'}, 'eq', subscriptionId, NodeRed.ValueTypes.STRING, request);
+    addFixedFilter({property : 'subscriptionId'}, 'eq', subscriptionId, NodeRed.ValueTypes.STRING, request);
     return transformToPerseoRequest(originalRequest);
   }
 }
