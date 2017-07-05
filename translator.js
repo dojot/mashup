@@ -231,7 +231,7 @@ function convertNodeRedValueType(type) {
  * detectedVariables: ['ev.Variable? as Variable', 'ev.Value? as Value']
  *
  * @param {String} template The template being translated
- * @param {Array} detectedVariables Array of detected variables
+ * @param {Set} detectedVariables Array of detected variables
  */
 function extractVariables(template, detectedVariables) {
   var beginTagIndex = template.search('{{');
@@ -244,7 +244,7 @@ function extractVariables(template, detectedVariables) {
     endTagIndex += 2;
     var remaining = template.slice(endTagIndex);
     var convertedTag = trimProperty(tag, ".");
-    detectedVariables.push('ev.' + convertedTag + '? as ' + convertedTag);
+    detectedVariables.add('ev.' + convertedTag + '? as ' + convertedTag);
     translatedTemplate = begin + '${' + convertedTag + '}' + remaining;
     translatedTemplate = extractVariables(translatedTemplate, detectedVariables);
 
@@ -302,7 +302,37 @@ function addFilterSeq(node, ruleOperation, ruleValue, ruleType, request) {
 }
 
 
+/**
+ * If necessary, translate any msg.protocol.?? references in mashup nodes into
+ * variables and references in perseo requests.
+ *
+ * Perseo can perform variable substitution in an action defined in each rule. To do that,
+ * it have a reference to it (listed in detectedVariables set, which has a list of 'ev.Var? as Var'
+ * sentences - just as in extractVariables function) and a tag in action parameters (which looks
+ * like bash variables, such as ${var}).
+ *  *
+ * @param {String} type Variable type. This function will be sensitive only to 'msg' type. All other types
+ * will be returned as is, and no other actions will be taken
+ * @param {String} value The actual value. If type is 'msg', it is expected that this parameter will take
+ * the 'payload.Var' form. If any other type is set, then its content will be returned as is.
+ * @param {Set} detectedVariables The detected variables so far. Attention: this should be a Set oject (which
+ * can be easily built from an array - i.e., the variables array from requestTemplate object)
+ * @return The converted variable. This could be the input value as is or something like '${var}'
+ */
+function convertVariable(type, template, detectedVariables) {
+  var translatedTemplate = undefined;
 
+  if (type === 'msg') {
+    var convertedTag = trimProperty(template, ".");
+    // TODO Verificar se já existe esta variável
+    detectedVariables.add('ev.' + convertedTag + '? as ' + convertedTag);
+    translatedTemplate = '${' + convertedTag + '}'
+  } else {
+    translatedTemplate = template;
+  }
+  return translatedTemplate;
+
+}
 /**
  * Generated a negated set of checks based on a list of rules.
  * All the rules are concatenated with AND operator. This function should be
@@ -538,12 +568,13 @@ function extractDataFromNode(objects, node, request, deviceType, deviceName) {
         if (node.rules[rule].t == 'set' || node.rules[rule].t == 'change') {
           var requestClone = cloneRequest(request);
           requestClone.action.type = PerseoTypes.ActionType.UPDATE;
+          let variableSet = new Set(requestClone.variables);
           requestClone.action.parameters = {
             "attributes": [
               {
                 "name": trimProperty(node.rules[rule].p, '.'),
                 "type": convertNodeRedValueType(node.rules[rule].tot),
-                "value": node.rules[rule].to
+                "value": convertVariable(node.rules[rule].tot, node.rules[rule].to, variableSet)
               }
             ]
           };
@@ -554,6 +585,7 @@ function extractDataFromNode(objects, node, request, deviceType, deviceName) {
               "value": "" // No value at creation time
             }
           );
+          requestClone.variables = Array.from(variableSet);
 
           // Keep checking further boxes - there might be further switches and other actions
           for (var wireset = 0; wireset < node.wires.length; wireset++) {
@@ -586,10 +618,9 @@ function extractDataFromNode(objects, node, request, deviceType, deviceName) {
       break;
     case NodeRed.NodeType.TEMPLATE:
       var requestClone = cloneRequest(request);
-      var detectedVariables = [];
-      requestClone.action.template = extractVariables(node.template, detectedVariables);
-      var fullVariableList = requestClone.variables.concat(detectedVariables);
-      requestClone.variables = fullVariableList;
+      var variableSet = new Set(requestClone.variables);
+      requestClone.action.template = extractVariables(node.template, variableSet);
+      requestClone.variables = Array.from(variableSet);
       // Do the string substitution
       // Keep checking further boxes - there might be further switches and other actions
       for (var wireset = 0; wireset < node.wires.length; wireset++) {
