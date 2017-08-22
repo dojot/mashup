@@ -1,0 +1,20 @@
+{
+  "name": "node-red-contrib-custom",
+  "version": "0.0.1",
+  "description": "Customized node-red nodes from core package",
+  "license"      : "Apache-2.0",
+  "contributors": [
+    {"name": "Nick O'Leary"},
+    {"name": "Dave Conway-Jones"}
+  ],
+  "dependencies": {
+    "jsonata":"1.0.10"
+  },
+  "keywords": ["node-red"],
+  "node-red": {
+    "nodes": {
+      "change": "nodes/10-switch.js",
+      "switch": "nodes/15-change.js"
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "name": "node-red-contrib-middleware",
+  "version": "0.0.1",
+  "description": "The middleware nodes for node-red",
+  "dependencies": {
+    "node-red-node-email": "^0.1.22",
+    "node-red-node-geofence": "0.0.16"
+  },
+  "keywords": [
+    "node-red"
+  ],
+  "node-red": {
+    "nodes": {
+      "device": "nodes/3-device.js",
+      "edgedetection": "nodes/4-edgedetection.js",
+      "httprequest_out": "nodes/5-httprequest_out.js"
+    }
+  }
+}

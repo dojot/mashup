@@ -1,0 +1,31 @@
+<script type="text/x-red" data-template-name="ngsi subscriber">
+   <div class="form-row">
+       <label for="node-input-url"><i class="fa fa-globe"></i> URL</label>
+       <input id="node-input-url" type="text">
+   </div>
+</script>
+
+<script type="text/x-red" data-help-name="ngsi subscriber">
+  <p>Create a NGSI subscriber.</p>
+</script>
+
+<script type="text/javascript">
+    RED.nodes.registerType('ngsi subscriber',{
+        category: 'output',     // the palette category
+        defaults: {             // defines the editable properties of the node
+            url: {value:"", required:true}
+        },
+        inputs:1,               // set the number of inputs - only 0 or 1
+        outputs:0,              // set the number of outputs - 0 to n
+        align: "right",
+
+        icon: "white-globe.png",// set the icon (held in icons dir below where you save the node)
+        color: "#87a980",       // background-color
+        label: function() {     // sets the default label contents
+            return this.url||"ngsi subscriber";
+        },
+        labelStyle: function() { // sets the class to apply to the label
+            return this.url?"node_label_italic":"";
+        }
+    });
+</script>
