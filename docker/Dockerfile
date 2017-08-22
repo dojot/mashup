@@ -1,4 +1,4 @@
-FROM node:6
+FROM node:7
 
 # Home directory for Node-RED application source code.
 RUN mkdir -p /usr/src/node-red
@@ -31,7 +31,7 @@ USER node-red
 RUN cd /data && npm install
 
 # Default Node-RED port
-EXPOSE 1880
+EXPOSE 1880 3000
 
 # Environment variable holding file path for flows configuration
 ENV FLOWS=flows.json

@@ -1,0 +1,93 @@
+[
+  {
+      "id": "2219ef6d.fba688",
+      "type": "device out",
+      "z": "456c7496.ac5c64",
+      "name": "",
+      "device": "",
+      "_device_id": "input-device-id",
+      "_device_label": "input-device-label",
+      "_device_type": "device",
+      "x": 290,
+      "y": 480,
+      "wires": [
+          [
+              "d7368f35.085a28"
+          ]
+      ]
+  },
+  {
+      "id": "ab538af3.8d994",
+      "type": "change",
+      "z": "456c7496.ac5c64",
+      "name": "",
+      "rules": [
+          {
+              "t": "set",
+              "p": "postBody",
+              "pt": "msg",
+              "to": "yes",
+              "tot": "str"
+          },
+          {
+              "t": "set",
+              "p": "headers.h1",
+              "pt": "msg",
+              "to": "h1-value-change",
+              "tot": "str"
+          },
+          {
+              "t": "set",
+              "p": "headers.h2",
+              "pt": "msg",
+              "to": "h2-value-change",
+              "tot": "str"
+          }
+      ],
+      "action": "",
+      "property": "",
+      "from": "",
+      "to": "",
+      "reg": false,
+      "x": 717,
+      "y": 467.73333740234375,
+      "wires": [
+          [
+              "5db2b9d4.9aca68"
+          ]
+      ]
+  },
+  {
+      "id": "5db2b9d4.9aca68",
+      "type": "http request out",
+      "z": "456c7496.ac5c64",
+      "name": "",
+      "method": "POST",
+      "ret": "txt",
+      "body": "postBody",
+      "url": "",
+      "tls": "",
+      "x": 1049,
+      "y": 449.48333740234375,
+      "wires": []
+  },
+  {
+      "id": "d7368f35.085a28",
+      "type": "template",
+      "z": "456c7496.ac5c64",
+      "name": "",
+      "field": "url",
+      "fieldType": "msg",
+      "format": "handlebars",
+      "syntax": "mustache",
+      "template": "http://endpoint/device/{{payload.attr1}}",
+      "output": "str",
+      "x": 490,
+      "y": 460,
+      "wires": [
+          [
+              "ab538af3.8d994"
+          ]
+      ]
+  }
+]

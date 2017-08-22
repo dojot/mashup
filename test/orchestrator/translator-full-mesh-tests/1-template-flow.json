@@ -1,0 +1,57 @@
+[
+  {
+      "id": "6a666fff.bfb128",
+      "type": "tab",
+      "label": "Flow 1"
+  },
+  {
+      "id": "947704f7.a87f4",
+      "type": "device out",
+      "z": "6a666fff.bfb128",
+      "name": "",
+      "device": "",
+      "_device_id": "input-device-id",
+      "_device_label": "input-device-label",
+      "_device_type": "device",
+      "x": 124,
+      "y": 281.1166687011719,
+      "wires": [
+          [
+              "b3e70cf6.debd38"
+          ]
+      ]
+  },
+  {
+      "id": "6c243f3b.4326f",
+      "type": "device in",
+      "z": "6a666fff.bfb128",
+      "name": "",
+      "device": "",
+      "attrs": "output",
+      "_device_id": "output-device-id",
+      "_device_label": "output-device-name",
+      "_device_type": "virtual",
+      "x": 1090,
+      "y": 300,
+      "wires": []
+  },
+  {
+      "id": "b3e70cf6.debd38",
+      "type": "template",
+      "z": "6a666fff.bfb128",
+      "name": "",
+      "field": "output",
+      "fieldType": "msg",
+      "format": "handlebars",
+      "syntax": "mustache",
+      "template": "{\n  \"result\": \"{{payload.attr1}}\",\n  \"result2\": \"{{payload.attr2}}\"\n}",
+      "output": "str",
+      "x": 510,
+      "y": 280,
+      "wires": [
+          [
+              "6c243f3b.4326f"
+          ]
+      ]
+  }
+]

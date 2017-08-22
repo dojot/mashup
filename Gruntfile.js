@@ -32,11 +32,12 @@ module.exports = function(grunt) {
         simplemocha: {
             options: {
                 globals: ['expect'],
-                timeout: 3000,
+                timeout: 10000,
                 ignoreLeaks: false,
                 ui: 'bdd',
                 reporter: 'spec'
             },
+            orchestrator: { src: ['test/test.js']},
             all: { src: ['test/**/*_spec.js'] },
             core: { src: ["test/_spec.js","test/red/**/*_spec.js"]},
             nodes: { src: ["test/nodes/**/*_spec.js"]}
@@ -50,7 +51,7 @@ module.exports = function(grunt) {
                 reportFormats: ['lcov'],
                 print: 'both'
             },
-            coverage: { src: ['test/**/*_spec.js'] }
+            coverage: { src: ['test/**/*_spec.js', 'test/test.js'] }
         },
         jshint: {
             options: {
@@ -71,7 +72,8 @@ module.exports = function(grunt) {
                 'red.js',
                 'red/**/*.js',
                 'nodes/core/*/*.js',
-                'editor/js/**/*.js'
+                'editor/js/**/*.js',
+                'orchestrator/*.js'
             ],
             core: {
                 files: {
@@ -92,9 +94,14 @@ module.exports = function(grunt) {
                     src: [ 'editor/js/**/*.js' ]
                 }
             },
-            tests: {
+            orchestrator: {
+              files: {
+                  src: [ 'orchestrator/*.js' ]
+              }
+            },
+            test: {
                 files: {
-                    src: ['test/**/*.js']
+                    src: ['test/**/*.js', 'test/test.js']
                 },
                 options: {
                     "expr": true
@@ -462,7 +469,11 @@ module.exports = function(grunt) {
 
     grunt.registerTask('default',
         'Builds editor content then runs code style checks and unit tests on all components',
-        ['build','test-core','test-editor','test-nodes']);
+        ['build','test-orchestrator', 'test-core','test-editor','test-nodes']);
+
+    grunt.registerTask('test-orchestrator',
+        'Runs code style check and unit tests on orchestrator runtime code',
+        ['jshint:orchestrator', 'simplemocha:orchestrator']);
 
     grunt.registerTask('test-core',
         'Runs code style check and unit tests on core runtime code',

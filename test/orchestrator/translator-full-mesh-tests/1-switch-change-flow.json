@@ -1,0 +1,89 @@
+[
+  {
+    "id": "cd03c24e.ad4b5",
+    "type": "tab",
+    "label": "Flow 1"
+  },
+  {
+      "id": "ad42e337.a4e128",
+      "type": "device out",
+      "z": "6a666fff.bfb128",
+      "name": "",
+      "device": "",
+      "_device_id": "input-device-id",
+      "_device_label": "input-device-label",
+      "_device_type": "device",
+      "x": 151,
+      "y": 275.1166687011719,
+      "wires": [
+          [
+              "214f24d6.17d8fc"
+          ]
+      ]
+  },
+  {
+      "id": "214f24d6.17d8fc",
+      "type": "switch",
+      "z": "6a666fff.bfb128",
+      "name": "",
+      "property": "payload.attr1",
+      "propertyType": "msg",
+      "rules": [
+          {
+              "t": "eq",
+              "v": "100",
+              "vt": "num"
+          }
+      ],
+      "checkall": "true",
+      "outputs": 1,
+      "x": 340,
+      "y": 275.3500061035156,
+      "wires": [
+          [
+              "1052bb8e.79ca2c"
+          ]
+      ]
+  },
+  {
+      "id": "1052bb8e.79ca2c",
+      "type": "change",
+      "z": "6a666fff.bfb128",
+      "name": "",
+      "rules": [
+          {
+              "t": "set",
+              "p": "output.result",
+              "pt": "msg",
+              "to": "yes",
+              "tot": "str"
+          }
+      ],
+      "action": "",
+      "property": "",
+      "from": "",
+      "to": "",
+      "reg": false,
+      "x": 588,
+      "y": 262.8500061035156,
+      "wires": [
+          [
+              "dfd7c1a6.8c917"
+          ]
+      ]
+  },
+  {
+      "id": "dfd7c1a6.8c917",
+      "type": "device in",
+      "z": "6a666fff.bfb128",
+      "name": "",
+      "device": "",
+      "attrs": "output",
+      "_device_id": "output-device-id",
+      "_device_label": "output-device-name",
+      "_device_type": "virtual",
+      "x": 866,
+      "y": 268.98333740234375,
+      "wires": []
+  }
+]

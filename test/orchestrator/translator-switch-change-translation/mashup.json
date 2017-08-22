@@ -1,0 +1,89 @@
+[
+    {
+      "id": "cd03c24e.ad4b5",
+      "type": "tab",
+      "label": "Flow 1"
+    },
+    {
+      "id": "83b3a7be.342a9",
+      "type": "device out",
+      "z": "cd03c24e.ad4b5",
+      "name": "",
+      "device": "{\"id\":\"cbd4\",\"type\":\"device\"}",
+      "_device_id": "cbd4",
+      "_device_label": "d1",
+      "_device_type": "device",
+      "x": 170.25,
+      "y": 250.5,
+      "wires": [
+        [
+          "952280ca.ca6dc"
+        ]
+      ]
+    },
+    {
+      "id": "8d474868.244fa8",
+      "type": "device in",
+      "z": "cd03c24e.ad4b5",
+      "name": "",
+      "device": "{\"id\":\"b48a\",\"type\":\"virtual\"}",
+      "attrs": "output",
+      "_device_id": "b48a",
+      "_device_label": "dv",
+      "_device_type": "virtual",
+      "x": 1104.25,
+      "y": 231.25,
+      "wires": []
+    },
+    {
+      "id": "952280ca.ca6dc",
+      "type": "switch",
+      "z": "cd03c24e.ad4b5",
+      "name": "",
+      "property": "payload.a",
+      "propertyType": "msg",
+      "rules": [
+        {
+          "t": "eq",
+          "v": "100",
+          "vt": "num"
+        }
+      ],
+      "checkall": "true",
+      "outputs": 2,
+      "x": 371.25,
+      "y": 250,
+      "wires": [
+        [
+          "76de540a.79ae54"
+        ]
+      ]
+    },
+    {
+      "id": "76de540a.79ae54",
+      "type": "change",
+      "z": "cd03c24e.ad4b5",
+      "name": "",
+      "rules": [
+        {
+          "t": "set",
+          "p": "output.a",
+          "pt": "msg",
+          "to": "cem",
+          "tot": "str"
+        }
+      ],
+      "action": "",
+      "property": "",
+      "from": "",
+      "to": "",
+      "reg": false,
+      "x": 645.25,
+      "y": 225,
+      "wires": [
+        [
+          "8d474868.244fa8"
+        ]
+      ]
+    }
+  ]

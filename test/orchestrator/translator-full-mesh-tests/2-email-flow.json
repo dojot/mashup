@@ -1,0 +1,60 @@
+[
+  {
+    "id": "cd03c24e.ad4b5",
+    "type": "tab",
+    "label": "Flow 1"
+  },
+  {
+      "id": "ad42e337.a4e128",
+      "type": "device out",
+      "z": "6a666fff.bfb128",
+      "name": "",
+      "device": "",
+      "_device_id": "input-device-id",
+      "_device_label": "input-device-label",
+      "_device_type": "device",
+      "x": 151,
+      "y": 275.1166687011719,
+      "wires": [
+          [
+              "b3e70cf6.debd38"
+          ]
+      ]
+  },
+  {
+    "id": "b3e70cf6.debd38",
+    "type": "template",
+    "z": "6a666fff.bfb128",
+    "name": "",
+    "field": "emailBody",
+    "fieldType": "msg",
+    "format": "handlebars",
+    "syntax": "mustache",
+    "template": "This is an email body with {{payload.attr1}} and {{payload.attr2}}\n",
+    "output": "str",
+    "x": 510,
+    "y": 280,
+    "wires": [
+        [
+            "cfcf5fe7.ec8958"
+        ]
+    ]
+  },
+  {
+      "id": "cfcf5fe7.ec8958",
+      "type": "e-mail",
+      "z": "6a666fff.bfb128",
+      "server": "gmail-smtp-in.l.google.com",
+      "port": "465",
+      "secure": true,
+      "name": "",
+      "dname": "",
+      "to": "to@user.com",
+      "from": "from@user.com",
+      "subject": "You've got e-mail",
+      "body": "emailBody",
+      "x": 886,
+      "y": 294.7166748046875,
+      "wires": []
+  }
+]
