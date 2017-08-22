@@ -12,7 +12,7 @@
     "scripts": {
         "start": "node red.js",
         "test": "grunt",
-        "test-orchestrator" : "istanbul cover grunt --report lcovonly test-orchestrator && istanbul report text",
+        "test-orchestrator": "istanbul cover grunt --report lcovonly test-orchestrator && istanbul report text",
         "build": "grunt build"
     },
     "bin": {

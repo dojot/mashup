@@ -729,16 +729,20 @@ function transformToPerseoRequest(request) {
       }
 
       // Processing headers
-      let headers = request.internalVariables['headers'];
-      if (typeof headers == 'object') {
-        resolvedVariables = resolveVariables(JSON.stringify(headers));
-      } else if (typeof headers == 'string') {
-        resolvedVariables = resolveVariables(headers);
+      if ('headers' in request.internalVariables) {
+        let headers = request.internalVariables['headers'];
+        if (typeof headers == 'object') {
+          resolvedVariables = resolveVariables(JSON.stringify(headers));
+        } else if (typeof headers == 'string') {
+          resolvedVariables = resolveVariables(headers);
+        }
+        for (let i = 0; i < resolvedVariables.inputVariables.length; i++){
+          addUniqueToArray(request.variables, resolvedVariables.inputVariables[i]);
+        }
+        perseoRule.action.parameters.headers = JSON.parse(resolvedVariables.translatedTemplate);
+      } else {
+        perseoRule.action.parameters.headers = "";
       }
-      for (let i in resolvedVariables.inputVariables){
-        addUniqueToArray(request.variables, resolvedVariables.inputVariables[i]);
-      }
-      perseoRule.action.parameters.headers = JSON.parse(resolvedVariables.translatedTemplate);
     }
     break;
     case PerseoTypes.ActionType.EMAIL : {
