@@ -1,0 +1,94 @@
+{
+  "_args": [
+    [
+      "node-red-node-geofence",
+      "/home/matheusr/CPqD/iot/gerrit/node-red-children"
+    ]
+  ],
+  "_from": "node-red-node-geofence@latest",
+  "_id": "node-red-node-geofence@0.0.16",
+  "_inCache": true,
+  "_installable": true,
+  "_location": "/node-red-node-geofence",
+  "_nodeVersion": "4.6.0",
+  "_npmOperationalInternal": {
+    "host": "packages-12-west.internal.npmjs.com",
+    "tmp": "tmp/node-red-node-geofence-0.0.16.tgz_1475959918846_0.16897416254505515"
+  },
+  "_npmUser": {
+    "email": "hardillb@gmail.com",
+    "name": "hardillb"
+  },
+  "_npmVersion": "2.15.9",
+  "_phantomChildren": {},
+  "_requested": {
+    "name": "node-red-node-geofence",
+    "raw": "node-red-node-geofence",
+    "rawSpec": "",
+    "scope": null,
+    "spec": "latest",
+    "type": "tag"
+  },
+  "_requiredBy": [
+    "/"
+  ],
+  "_resolved": "https://registry.npmjs.org/node-red-node-geofence/-/node-red-node-geofence-0.0.16.tgz",
+  "_shasum": "3feed93392ab7ce257e05c77e208b779778e47a0",
+  "_shrinkwrap": null,
+  "_spec": "node-red-node-geofence",
+  "_where": "/home/matheusr/CPqD/iot/gerrit/node-red-children",
+  "bugs": {
+    "url": "https://github.com/hardillb/node-red-node-geofence/issues"
+  },
+  "contributors": [
+    {
+      "name": "Benjamin Hardill",
+      "email": "hardillb@gmail.com",
+      "url": "http://www.hardill.me.uk/wordpress/"
+    },
+    {
+      "name": "Dave Conway-Jones"
+    }
+  ],
+  "dependencies": {
+    "geolib": "*"
+  },
+  "description": "A simple node to filter based on location",
+  "devDependencies": {},
+  "directories": {},
+  "dist": {
+    "shasum": "3feed93392ab7ce257e05c77e208b779778e47a0",
+    "tarball": "https://registry.npmjs.org/node-red-node-geofence/-/node-red-node-geofence-0.0.16.tgz"
+  },
+  "homepage": "https://github.com/hardillb/node-red-node-geofence#readme",
+  "keywords": [
+    "geofence",
+    "location",
+    "node-red"
+  ],
+  "license": "Apache-2.0",
+  "maintainers": [
+    {
+      "name": "hardillb",
+      "email": "hardillb@gmail.com"
+    },
+    {
+      "name": "dceejay",
+      "email": "ceejay@vnet.ibm.com"
+    }
+  ],
+  "name": "node-red-node-geofence",
+  "node-red": {
+    "nodes": {
+      "geofence": "geofence.js"
+    }
+  },
+  "optionalDependencies": {},
+  "readme": "ERROR: No README data found!",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hardillb/node-red-node-geofence.git"
+  },
+  "scripts": {},
+  "version": "0.0.16"
+}

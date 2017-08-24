@@ -2,6 +2,7 @@ sudo: false
 language: node_js
 env:
   - CXX="g++-4.8"
+services: mongodb
 addons:
   apt:
     sources:
@@ -9,6 +10,8 @@ addons:
     packages:
     - g++-4.8
     - gcc-4.8
+  hosts:
+    - mongodb
 node_js:
   - "8"
   - "7"
@@ -19,3 +22,4 @@ script:
 before_script:
   - npm install -g istanbul
   - npm install coveralls
+  - npm install chai mocha

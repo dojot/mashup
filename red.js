@@ -26,6 +26,8 @@ var path = require("path");
 var fs = require("fs-extra");
 var RED = require("./red/red.js");
 
+var orchestrator = require("./orchestrator/server");
+
 var server;
 var app = express();
 
@@ -295,6 +297,9 @@ RED.start().then(function() {
             process.title = parsedArgs.title || 'node-red';
             RED.log.info(RED.log._("server.now-running", {listenpath:getListenPath()}));
         });
+
+        // Start orchestrator service
+        orchestrator.init();
     } else {
         RED.log.info(RED.log._("server.headless-mode"));
     }
