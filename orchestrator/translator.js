@@ -22,7 +22,8 @@ var NodeRed = {
     GEOFENCE: 'geofence',
     EMAIL: 'e-mail',
     EDGEDETECTION: 'edgedetection',
-    HTTP_POST: 'http post'
+    HTTP_POST: 'http post',
+    HISTORY: 'history'
   },
   LogicalOperators: {
     'eq': '==',
@@ -586,6 +587,13 @@ function extractDataFromNode(objects, node, request) {
         'body' : node.body
       };
       requestList.push(request);
+      break;
+
+    case NodeRed.NodeType.HISTORY:
+      request.subscriptionEndPoint = config.cygnus.url + "/notify";
+
+      perseoRequestResults.push(request);
+
       break;
   }
   return requestList;
