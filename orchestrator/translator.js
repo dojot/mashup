@@ -590,9 +590,9 @@ function extractDataFromNode(objects, node, request) {
       break;
 
     case NodeRed.NodeType.HISTORY:
-      request.subscriptionEndPoint = config.cygnus.url + "/notify";
+      request.action.notificationEndpoint = config.cygnus.url + "/notify";
 
-      perseoRequestResults.push(request);
+      requestList.push(request);
 
       break;
   }
@@ -673,6 +673,11 @@ function transformToOrionSubscriptions(requests) {
 }
 
 function transformToPerseoRequest(request) {
+
+  if (request.action.type == "") {
+    return null;
+  }
+  
   let perseoRule = cloneSimpleObject(perseoRuleTemplate);
 
   perseoRule.name = request.name;
