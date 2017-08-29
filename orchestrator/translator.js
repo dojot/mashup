@@ -174,7 +174,8 @@ var perseoRuleTemplate = {
   'action' : {
     'type' : '',
     'template' : '',
-    'parameters' : {}
+    'parameters' : {},
+    'mirror' : false
   }
 }
 
@@ -704,13 +705,22 @@ function transformToPerseoRequest(request) {
     case PerseoTypes.ActionType.POST : {
       // Translate body
       let postBodyVar = request.action.template;
-      let postBody = request.internalVariables[postBodyVar];
-      let resolvedVariables = resolveVariables(postBody);
-      perseoRule.action.parameters = request.action.parameters;
-      perseoRule.action.template = resolvedVariables.translatedTemplate;
-      for (let i = 0; i < resolvedVariables.inputVariables.length; i++){
-        addUniqueToArray(request.variables, resolvedVariables.inputVariables[i]);
+      let resolvedVariables;
+
+      if (postBodyVar === 'payload') {
+        perseoRule.action.mirror = true;
+        perseoRule.action.template = 'dummy-template';
+      } else {
+        perseoRule.action.mirror = false;
+        let postBody = request.internalVariables[postBodyVar];
+        let resolvedVariables = resolveVariables(postBody);
+        perseoRule.action.template = resolvedVariables.translatedTemplate;
+        for (let i = 0; i < resolvedVariables.inputVariables.length; i++){
+          addUniqueToArray(request.variables, resolvedVariables.inputVariables[i]);
+        }
       }
+
+      perseoRule.action.parameters = request.action.parameters;
 
       if (perseoRule.action.parameters.url == '{{url}}') {
         resolvedVariables = resolveVariables(request.internalVariables['url']);

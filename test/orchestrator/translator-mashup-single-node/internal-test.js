@@ -49,7 +49,7 @@ function execute() {
             },
             "action": {
               "type": "",
-              "template": "",
+              "template": "", "mirror": false,
               "parameters": {}
             },
             "inputDevice": {
@@ -74,7 +74,7 @@ function execute() {
               },
               "action": {
                 "type": "",
-                "template": "",
+                "template": "", "mirror": false,
                 "parameters": {}
               },
               "inputDevice": {
@@ -152,7 +152,7 @@ function execute() {
             },
             "action": {
               "type": "",
-              "template": "",
+              "template": "", "mirror": false,
               "parameters": {}
             },
             "inputDevice": {
@@ -177,7 +177,7 @@ function execute() {
               },
               "action": {
                 "type": "",
-                "template": "",
+                "template": "", "mirror": false,
                 "parameters": {}
               },
               "inputDevice": {
@@ -261,7 +261,7 @@ function execute() {
             },
             "action": {
               "type": "",
-              "template": "",
+              "template": "", "mirror": false,
               "parameters": {}
             },
             "inputDevice": {
@@ -286,7 +286,7 @@ function execute() {
               },
               "action": {
                 "type": "",
-                "template": "",
+                "template": "", "mirror": false,
                 "parameters": {}
               },
               "inputDevice": {
@@ -363,7 +363,7 @@ function execute() {
             },
             "action": {
               "type": "",
-              "template": "",
+              "template": "", "mirror": false,
               "parameters": {}
             },
             "inputDevice": {
@@ -388,7 +388,7 @@ function execute() {
               },
               "action": {
                 "type": "",
-                "template": "",
+                "template": "", "mirror": false,
                 "parameters": {}
               },
               "inputDevice": {
@@ -522,7 +522,7 @@ function execute() {
             },
             "action": {
               "type": "",
-              "template": "",
+              "template": "", "mirror": false,
               "parameters": {}
             },
             "inputDevice": {
@@ -547,7 +547,7 @@ function execute() {
               },
               "action": {
                 "type": "",
-                "template": "",
+                "template": "", "mirror": false,
                 "parameters": {}
               },
               "inputDevice": {
@@ -617,7 +617,7 @@ function execute() {
             },
             "action": {
               "type": "",
-              "template": "",
+              "template": "", "mirror": false,
               "parameters": {}
             },
             "inputDevice": {
@@ -642,7 +642,7 @@ function execute() {
               },
               "action": {
                 "type": "",
-                "template": "",
+                "template": "", "mirror": false,
                 "parameters": {}
               },
               "inputDevice": {
@@ -714,7 +714,7 @@ function execute() {
             },
             "action": {
               "type": "",
-              "template": "",
+              "template": "", "mirror": false,
               "parameters": {}
             },
             "inputDevice": {
@@ -740,7 +740,7 @@ function execute() {
               "action": {
                 "notificationEndpoint": "http://perseo-fe:9090/noticesv2",
                 "type": "",
-                "template": "",
+                "template": "", "mirror": false,
                 "parameters": {}
               },
               "inputDevice": {
@@ -815,7 +815,7 @@ function execute() {
             },
             "action": {
               "type": "",
-              "template": "",
+              "template": "", "mirror": false,
               "parameters": {}
             },
             "inputDevice": {
@@ -841,7 +841,7 @@ function execute() {
               "action": {
                 "notificationEndpoint": "http://perseo-fe:9090/noticesv2",
                 "type": "",
-                "template": "",
+                "template": "", "mirror": false,
                 "parameters": {}
               },
               "inputDevice": {

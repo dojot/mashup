@@ -54,7 +54,7 @@ function execute() {
                     "isPattern": false,
                     "type": "virtual"
                   },
-                  "template": "",
+                  "template": "", "mirror": false,
                   "type": "update"
                 },
                 "name": "rule_6a666fff_bfb128_1",
@@ -122,7 +122,7 @@ function execute() {
                     "isPattern": false,
                     "type": "virtual"
                   },
-                  "template": "",
+                  "template": "", "mirror": false,
                   "type": "update"
                 },
                 "name": "rule_6a666fff_bfb128_1",
@@ -167,7 +167,7 @@ function execute() {
                     "isPattern": false,
                     "type": "virtual"
                   },
-                  "template": "",
+                  "template": "", "mirror": false,
                   "type": "update"
                 },
                 "name": "rule_6a666fff_bfb128_2",
@@ -228,7 +228,7 @@ function execute() {
                     "isPattern": false,
                     "type": "virtual"
                   },
-                  "template": "",
+                  "template": "", "mirror": false,
                   "type": "update"
                 },
                 "name": "rule_6a666fff_bfb128_1",
@@ -324,7 +324,7 @@ function execute() {
                     "isPattern": false,
                     "type": "virtual"
                   },
-                  "template": "",
+                  "template": "", "mirror": false,
                   "type": "update"
                 },
                 "name": "rule_6a666fff_bfb128_1",
@@ -423,7 +423,7 @@ function execute() {
                     "isPattern": false,
                     "type": "virtual"
                   },
-                  "template": "",
+                  "template": "", "mirror": false,
                   "type": "update"
                 },
                 "name": "rule_6a666fff_bfb128_1",
@@ -489,7 +489,7 @@ function execute() {
                     "isPattern": false,
                     "type": "virtual"
                   },
-                  "template": "",
+                  "template": "", "mirror": false,
                   "type": "update"
                 },
                 "name": "rule_6a666fff_bfb128_1",
@@ -546,7 +546,7 @@ function execute() {
                     "subject": "You've got e-mail",
                     "to": "to@user.com"
                   },
-                  "template": "",
+                  "template": "", "mirror": false,
                   "type": "email"
                 },
                 "name": "rule_6a666fff_bfb128_1",
@@ -600,7 +600,7 @@ function execute() {
                     "subject": "You've got e-mail",
                     "to": "to@user.com"
                   },
-                  "template": "",
+                  "template": "", "mirror": false,
                   "type": "email"
                 },
                 "name": "rule_6a666fff_bfb128_1",
@@ -656,6 +656,7 @@ function execute() {
                     "url": "http://endpoint/device/attrs"
                   },
                   "template": "yes",
+                  "mirror": false,
                   "type" : "post"
                 },
                 "name": "rule_456c7496_ac5c64_1",
@@ -711,6 +712,7 @@ function execute() {
                     "url": "http://endpoint/device/attrs"
                   },
                   "template": "yes",
+                  "mirror": false,
                   "type" : "post"
                 },
                 "name": "rule_456c7496_ac5c64_1",
@@ -766,6 +768,7 @@ function execute() {
                     "url": "http://endpoint/device/${attr1}"
                   },
                   "template": "yes",
+                  "mirror": false,
                   "type" : "post"
                 },
                 "name": "rule_456c7496_ac5c64_1",
@@ -822,6 +825,7 @@ function execute() {
                     "url": "http://endpoint/device/${attr1}"
                   },
                   "template": "yes",
+                  "mirror": false,
                   "type" : "post"
                 },
                 "name": "rule_456c7496_ac5c64_1",
@@ -878,6 +882,7 @@ function execute() {
                     "url": "http://endpoint/device/${attr1}"
                   },
                   "template": "yes",
+                  "mirror": false,
                   "type" : "post"
                 },
                 "name": "rule_456c7496_ac5c64_1",
@@ -899,6 +904,62 @@ function execute() {
       });
     });
 
+
+    describe('Basic post flow with change node setting url and HTTP method externally in a change node', function() {
+      it('should generate all request correctly', function(done) {
+        var mashup = fs.readFile(__dirname+ '/6-post-flow.json', 'utf8', function(err, data) {
+          try {
+            let flow = JSON.parse(data);
+            let result = translator.translateMashup(flow);
+            let expected = {
+              "subscription": {
+                "description": "Subscription for input-device-id",
+                "notification": {
+                  "http": {
+                    "url": "http://perseo-fe:9090/noticesv2"
+                  }
+                },
+                "subject": {
+                  "entities": [
+                    {
+                      "id": "input-device-id",
+                      "type": "device"
+                    }
+                  ]
+                }
+              },
+              "perseoRequest": {
+                "action": {
+                  "parameters": {
+                    "headers": {
+                      "h1": "h1-value-change",
+                      "h2": "h2-value-change"
+                    },
+                    "method": "PUT",
+                    "url": "http://endpoint/device/${attr1}"
+                  },
+                  "template": "dummy-template",
+                  "mirror": true,
+                  "type" : "post"
+                },
+                "name": "rule_456c7496_ac5c64_1",
+                "text": "select *, \"rule_456c7496_ac5c64_1\" as ruleName, ev.attr1? as attr1 from pattern [every ev = iotEvent(cast(subscriptionId?, String) = \"12345\")]"
+              }
+            };
+            expect(result.length).equal(1);
+            expect(result[0].subscription).to.deep.equal(expected.subscription);
+
+            let perseoRequest = translator.generatePerseoRequest(12345, 0, result[0].originalRequest);
+            expect(perseoRequest).not.equal(undefined);
+            expect(perseoRequest).to.deep.equal(expected.perseoRequest);
+
+            done();
+          } catch (error) {
+            done(error);
+          }
+        });
+      });
+    });
 
 
 
