@@ -19,9 +19,9 @@ RUN cd /usr/src/node-red/nodes/core; \
 # And add all dojot-related nodes
 COPY contrib-nodes /data/node_modules
 RUN useradd --home-dir /usr/src/node-red --no-create-home node-red \
+    && rm -fr /usr/src/node-red/node_modules \
     && chown -R node-red:node-red /data \
-    && chown -R node-red:node-red /usr/src/node-red \
-    && chown -R node-red:node-red /data/node_modules
+    && chown -R node-red:node-red /usr/src/node-red
 
 USER node-red
 RUN npm install && npm run build && cd /data && npm install
