@@ -790,6 +790,48 @@ describe('Generate Perseo rule with UPDATE action', function() {
       });
     });
 
+      describe('Generate Perseo rule with no action', function() {
+        it('should generate the rule creation request without errors', function(done) {
+          let request = {};
+          let expected = {};
+
+          function reset() {
+            request = {
+              "name": "simple-rule-1",
+              "variables": ["temperature"],
+              "internalVariables": {
+                'output-var' : {
+                  'attr1' : '{{payload.temperature}}'
+                }
+              },
+              "pattern": {
+                "fixedEventConditions" : [],
+                "fixedEventSubscriptionId" : "123456",
+                "firstEventConditions": [],
+                "firstEventSubscriptionId" : "",
+                "secondEventConditions": [],
+                "secondEventSubscriptionId" : ""
+              },
+              "action": {
+                "notificationEndpoint": "perseo-endpoint",
+                "type": "",
+                "template": "",
+                "parameters": {}
+              },
+              "inputDevice": {
+                "type": "device",
+                "id": "device-id-1",
+                "attributes": []
+              }
+            };
+          }
+
+          reset();
+          let results = translator.transformToPerseoRequest(request);
+          expect(results).to.equal(null);
+          done();
+        });
+      });
   });
 }
 

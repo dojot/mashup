@@ -15,6 +15,9 @@ config.mongo = {
   url: "mongodb://mongodb:27017/orchestrator"
 }
 
-
+config.cygnus = {
+  url: 'http://cygnus:5050',
+  default_subscription_duration : "P1M"
+}
 
 module.exports = config;

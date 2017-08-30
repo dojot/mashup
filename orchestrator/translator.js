@@ -22,7 +22,8 @@ var NodeRed = {
     GEOFENCE: 'geofence',
     EMAIL: 'e-mail',
     EDGEDETECTION: 'edgedetection',
-    HTTP_POST: 'http post'
+    HTTP_POST: 'http post',
+    HISTORY: 'history'
   },
   LogicalOperators: {
     'eq': '==',
@@ -588,6 +589,13 @@ function extractDataFromNode(objects, node, request) {
       };
       requestList.push(request);
       break;
+
+    case NodeRed.NodeType.HISTORY:
+      request.action.notificationEndpoint = config.cygnus.url + "/notify";
+
+      requestList.push(request);
+
+      break;
   }
   return requestList;
 }
@@ -666,6 +674,11 @@ function transformToOrionSubscriptions(requests) {
 }
 
 function transformToPerseoRequest(request) {
+
+  if (request.action.type == "") {
+    return null;
+  }
+  
   let perseoRule = cloneSimpleObject(perseoRuleTemplate);
 
   perseoRule.name = request.name;

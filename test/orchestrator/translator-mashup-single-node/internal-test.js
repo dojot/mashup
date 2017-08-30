@@ -872,6 +872,90 @@ function execute() {
       });
     });
   });
+
+  describe('Add history node', function() {
+    it('should update the prototype properly', function(done) {
+      let node = {};
+      let objects = [];
+      let request = {};
+      let expected = {};
+      let result = [];
+
+      function reset() {
+        node = {
+          "id": "bc5a1dd.b7e3c6",
+          "type": "history",
+          "z": "fc69e174.138a5",
+          "name": "",
+          "database": "InfluxDB",
+          "x": 705.8333587646484,
+          "y": 212.33335876464844,
+          "wires": []
+        }
+
+        objects[node.id] = node;
+
+        request = {
+          "name": "",
+          "variables": [],
+          "internalVariables": {},
+          "pattern": {
+            "fixedEventConditions" : [],
+            "fixedEventSubscriptionId" : "",
+            "firstEventConditions": [],
+            "firstEventSubscriptionId" : "",
+            "secondEventConditions": [],
+            "secondEventSubscriptionId" : ""
+          },
+          "action": {
+            "type": "",
+            "template": "",
+            "parameters": {}
+          },
+          "inputDevice": {
+            "type": "",
+            "id": "",
+            "attributes": []
+          }
+        };
+
+        expected = {
+          request : {
+            "name": "",
+            "variables": [],
+            "internalVariables": {},
+            "pattern": {
+              "fixedEventConditions" : [],
+              "fixedEventSubscriptionId" : "",
+              "firstEventConditions": [],
+              "firstEventSubscriptionId" : "",
+              "secondEventConditions": [],
+              "secondEventSubscriptionId" : ""
+            },
+            "action": {
+              "notificationEndpoint": "http://cygnus:5050/notify",
+              "type": "",
+              "template": "",
+              "parameters": {}
+            },
+            "inputDevice": {
+              "type": "",
+              "id": "",
+              "attributes": []
+            }
+          }
+        };
+        result = [];
+      }
+
+      reset();
+      result = translator.extractDataFromNode(objects, node, request);
+      expect(result.length).equal(1);
+
+      expect(result[0]).to.deep.equal(expected.request);
+      done();
+    });
+  });
 }
 
 exports.execute = execute;
