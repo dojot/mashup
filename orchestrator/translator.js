@@ -416,8 +416,9 @@ function extractFurtherNodes(objects, node, outputIx, request, requestList) {
     requestList.push(request);
   } else {
     for (let wire = 0; wire < node.wires[outputIx].length; wire++) {
+      let requestClone = cloneSimpleObject(request);
       let nextNode = objects[node.wires[outputIx][wire]];
-      let result = extractDataFromNode(objects, nextNode, request);
+      let result = extractDataFromNode(objects, nextNode, requestClone);
       requestList = requestList.concat(result);
     }
   }
