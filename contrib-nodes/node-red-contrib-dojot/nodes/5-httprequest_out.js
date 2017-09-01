@@ -21,5 +21,5 @@ module.exports = function(RED) {
         RED.nodes.createNode(this,n);
     }
 
-    RED.nodes.registerType("http request out",HTTPRequestOut);
+    RED.nodes.registerType("http-request-out",HTTPRequestOut);
 }
