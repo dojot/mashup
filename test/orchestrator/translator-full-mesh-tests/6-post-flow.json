@@ -1,0 +1,81 @@
+[
+  {
+      "id": "2219ef6d.fba688",
+      "type": "device out",
+      "z": "456c7496.ac5c64",
+      "name": "",
+      "device": "",
+      "_device_id": "input-device-id",
+      "_device_label": "input-device-label",
+      "_device_type": "device",
+      "x": 290,
+      "y": 480,
+      "wires": [
+          [
+              "ab538af3.8d994"
+          ]
+      ]
+  },
+  {
+      "id": "ab538af3.8d994",
+      "type": "change",
+      "z": "456c7496.ac5c64",
+      "name": "",
+      "rules": [
+          {
+              "t": "set",
+              "p": "headers.h1",
+              "pt": "msg",
+              "to": "h1-value-change",
+              "tot": "str"
+          },
+          {
+              "t": "set",
+              "p": "headers.h2",
+              "pt": "msg",
+              "to": "h2-value-change",
+              "tot": "str"
+          },
+          {
+              "t": "set",
+              "p": "url",
+              "pt": "msg",
+              "to": "http://endpoint/device/{{payload.attr1}}",
+              "tot": "str"
+          },
+          {
+              "t": "set",
+              "p": "method",
+              "pt": "msg",
+              "to": "PUT",
+              "tot": "str"
+          }
+      ],
+      "action": "",
+      "property": "",
+      "from": "",
+      "to": "",
+      "reg": false,
+      "x": 717,
+      "y": 467.73333740234375,
+      "wires": [
+          [
+              "5db2b9d4.9aca68"
+          ]
+      ]
+  },
+  {
+      "id": "5db2b9d4.9aca68",
+      "type": "http request out",
+      "z": "456c7496.ac5c64",
+      "name": "",
+      "method": "use",
+      "ret": "txt",
+      "body": "payload",
+      "url": "",
+      "tls": "",
+      "x": 1049,
+      "y": 449.48333740234375,
+      "wires": []
+  }
+]
