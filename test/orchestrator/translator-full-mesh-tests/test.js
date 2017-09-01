@@ -328,7 +328,7 @@ function execute() {
                   "type": "update"
                 },
                 "name": "rule_6a666fff_bfb128_1",
-                "text": "select *, \"rule_6a666fff_bfb128_1\" as ruleName, ev.attr1? as attr1 from pattern [every ev = iotEvent(cast(subscriptionId?, String) = \"12345\") -> iotEvent(cast(subscriptionId?, String) = \"123456\")]"
+                "text": "select *, \"rule_6a666fff_bfb128_1\" as ruleName, ev2.attr1? as attr1 from pattern [every ev = iotEvent(cast(subscriptionId?, String) = \"12345\") -> ev2 = iotEvent(cast(subscriptionId?, String) = \"123456\")]"
               }
             },
             ];
@@ -427,7 +427,7 @@ function execute() {
                   "type": "update"
                 },
                 "name": "rule_6a666fff_bfb128_1",
-                "text": "select *, \"rule_6a666fff_bfb128_1\" as ruleName, ev.attr1? as attr1, ev.attr2? as attr2 from pattern [every ev = iotEvent(cast(subscriptionId?, String) = \"12345\") -> iotEvent(cast(subscriptionId?, String) = \"123456\")]"
+                "text": "select *, \"rule_6a666fff_bfb128_1\" as ruleName, ev2.attr1? as attr1, ev2.attr2? as attr2 from pattern [every ev = iotEvent(cast(subscriptionId?, String) = \"12345\") -> ev2 = iotEvent(cast(subscriptionId?, String) = \"123456\")]"
               }
             },
             ];

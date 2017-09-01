@@ -678,7 +678,7 @@ function transformToPerseoRequest(request) {
   if (request.action.type == "") {
     return null;
   }
-  
+
   let perseoRule = cloneSimpleObject(perseoRuleTemplate);
 
   perseoRule.name = request.name;
@@ -784,8 +784,13 @@ function transformToPerseoRequest(request) {
 
   perseoRule.text = 'select *';
   perseoRule.text += ', \"' + request.name + '\" as ruleName';
+  let sourceEvent = 'ev';
+  if (request.pattern.secondEventConditions.length != 0) {
+    sourceEvent = 'ev2';
+  }
+
   for (let i = 0; i < request.variables.length; i++) {
-    perseoRule.text += ', ev.' + request.variables[i] + '? as ' + request.variables[i];
+    perseoRule.text += ', ' + sourceEvent + '.' + request.variables[i] + '? as ' + request.variables[i];
   }
 
   perseoRule.text += ' from pattern [';
@@ -794,7 +799,7 @@ function transformToPerseoRequest(request) {
     perseoRule.text += 'cast(subscriptionId?, String) = \"' + request.pattern.fixedEventSubscriptionId + '\"';
   } else if (request.pattern.firstEventSubscriptionId != '' && request.pattern.secondEventSubscriptionId != '') {
     perseoRule.text += 'cast(subscriptionId?, String) = \"' + request.pattern.firstEventSubscriptionId + '\")';
-    perseoRule.text += ' -> iotEvent(cast(subscriptionId?, String) = \"' + request.pattern.secondEventSubscriptionId + '\"';
+    perseoRule.text += ' -> ev2 = iotEvent(cast(subscriptionId?, String) = \"' + request.pattern.secondEventSubscriptionId + '\"';
   }
   perseoRule.text += ')]';
   return perseoRule;
