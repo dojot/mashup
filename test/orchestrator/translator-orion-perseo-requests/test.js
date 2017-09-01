@@ -32,7 +32,7 @@ function execute() {
               "action": {
                 "notificationEndpoint": "perseo-endpoint",
                 "type": "",
-                "template": "",
+                "template": "", "mirror": false,
                 "parameters": {}
               },
               "inputDevice": {
@@ -96,7 +96,7 @@ function execute() {
               "action": {
                 "notificationEndpoint": "perseo-endpoint",
                 "type": "",
-                "template": "",
+                "template": "", "mirror": false,
                 "parameters": {}
               },
               "inputDevice": {
@@ -166,7 +166,7 @@ function execute() {
               "action": {
                 "notificationEndpoint": "perseo-endpoint",
                 "type": "",
-                "template": "",
+                "template": "", "mirror": false,
                 "parameters": {}
               },
               "inputDevice": {
@@ -239,7 +239,7 @@ function execute() {
               "action": {
                 "notificationEndpoint": "perseo-endpoint",
                 "type": "",
-                "template": "",
+                "template": "", "mirror": false,
                 "parameters": {}
               },
               "inputDevice": {
@@ -314,7 +314,7 @@ function execute() {
               "action": {
                 "notificationEndpoint": "perseo-endpoint",
                 "type": "",
-                "template": "",
+                "template": "", "mirror": false,
                 "parameters": {}
               },
               "inputDevice": {
@@ -413,7 +413,7 @@ function execute() {
               "action": {
                 "notificationEndpoint": "perseo-endpoint",
                 "type": "",
-                "template": "",
+                "template": "", "mirror": false,
                 "parameters": {}
               },
               "inputDevice": {
@@ -517,7 +517,7 @@ function execute() {
               "action": {
                 "notificationEndpoint": "perseo-endpoint",
                 "type": "",
-                "template": "",
+                "template": "", "mirror": false,
                 "parameters": {}
               },
               "inputDevice": {
@@ -620,7 +620,7 @@ function execute() {
             "action": {
               "notificationEndpoint": "perseo-endpoint",
               "type": "update",
-              "template": "",
+              "template": "", "mirror": false,
               "parameters": {
                 "id" : "output-device-id",
                 "type" : "virtual",
@@ -647,7 +647,7 @@ function execute() {
                 "isPattern": false,
                 "type": "virtual",
               },
-              "template": "",
+              "template": "", "mirror": false,
               "type": "update",
             },
             "name": "simple-rule-1",
@@ -686,7 +686,7 @@ describe('Generate Perseo rule with UPDATE action', function() {
             "action": {
               "notificationEndpoint": "perseo-endpoint",
               "type": "update",
-              "template": "",
+              "template": "", "mirror": false,
               "parameters": {
                 "id" : "output-device-id",
                 "type" : "virtual",
@@ -713,7 +713,7 @@ describe('Generate Perseo rule with UPDATE action', function() {
                 "isPattern": false,
                 "type": "virtual",
               },
-              "template": "",
+              "template": "", "mirror": false,
               "type": "update",
             },
             "name": "simple-rule-1",
@@ -751,7 +751,7 @@ describe('Generate Perseo rule with UPDATE action', function() {
             "action": {
               "notificationEndpoint": "perseo-endpoint",
               "type": "email",
-              "template": "",
+              "template": "", "mirror": false,
               "parameters": {
                 "to" : "to@user.com",
                 "from" : "from@user.com",
@@ -775,7 +775,7 @@ describe('Generate Perseo rule with UPDATE action', function() {
                 "smtp" : "smtp@server.com",
                 "body" : "This is an email body with ${temperature}"
               },
-              "template": "",
+              "template": "", "mirror": false,
               "type": "email",
             },
             "name": "simple-rule-1",
