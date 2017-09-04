@@ -59,7 +59,7 @@
   },
   {
       "id": "5db2b9d4.9aca68",
-      "type": "http request out",
+      "type": "http-request-out",
       "z": "456c7496.ac5c64",
       "name": "",
       "method": "POST",
