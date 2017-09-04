@@ -559,8 +559,58 @@ function execute() {
           }
         });
       });
-    });
 
+
+      it('should generate all request correctly with self-created variable references', function(done) {
+        var mashup = fs.readFile(__dirname+ '/2-template-flow.json', 'utf8', function(err, data) {
+          try {
+            let expected = {
+              "subscription": {
+                "description": "Subscription for input-device-id",
+                "notification": {
+                  "http": {
+                    "url": "http://perseo-fe:9090/noticesv2"
+                  }
+                },
+                "subject": {
+                  "entities": [
+                    {
+                      "id": "input-device-id",
+                      "type": "device"
+                    }
+                  ]
+                }
+              },
+              "perseoRequest": {
+                "action": {
+                  "parameters": {
+                    "headers" : "",
+                    "method" : "POST",
+                    "url": "http://172.18.0.1:8081/device/attrs"
+                  },
+                  "template": "Valor subiu para ${a}", "mirror": false,
+                  "type": "post"
+                },
+                "name": "rule_f77ff6a8_86454_1",
+                "text": "select *, \"rule_f77ff6a8_86454_1\" as ruleName, ev.a? as a from pattern [every ev = iotEvent(cast(subscriptionId?, String) = \"12345\")]"
+              }
+            };
+            let flow = JSON.parse(data);
+            let result = translator.translateMashup(flow);
+            expect(result.length).equal(1);
+            expect(result[0].subscription).to.deep.equal(expected.subscription);
+
+            let perseoRequest = translator.generatePerseoRequest(12345, 0, result[0].originalRequest);
+            expect(perseoRequest).not.equal(undefined);
+            expect(perseoRequest).to.deep.equal(expected.perseoRequest);
+
+            done();
+          } catch (error) {
+            done(error);
+          }
+        });
+      });
+    });
 
     describe('Basic email flow with change node', function() {
       it('should generate all request correctly', function(done) {
