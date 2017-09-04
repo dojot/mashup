@@ -17,7 +17,7 @@ var NodeRed = {
     INPUT_DEVICE: 'device out',
     SWITCH: 'switch',
     CHANGE: 'change',
-    HTTP_REQUEST: 'http request out',
+    HTTP_REQUEST: 'http-request-out',
     TEMPLATE: 'template',
     GEOFENCE: 'geofence',
     EMAIL: 'e-mail',
