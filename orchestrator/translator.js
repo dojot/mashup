@@ -1,5 +1,6 @@
 /* jshint node: true */
 "use strict";
+
 /**
  * Translate a JSON from node-RED to a perseo-fe request (only
  * body part).
@@ -7,296 +8,23 @@
 
 var util = require('util'),
     config = require('./config'),
-    resolver = require('./resolver');
-
-/**
- * All constants from node-RED-generated flows
- */
-var NodeRed = {
-  NodeType: {
-    OUTPUT_DEVICE: 'device in',
-    INPUT_DEVICE: 'device out',
-    SWITCH: 'switch',
-    CHANGE: 'change',
-    HTTP_REQUEST: 'http-request-out',
-    TEMPLATE: 'template',
-    GEOFENCE: 'geofence',
-    EMAIL: 'e-mail',
-    EDGEDETECTION: 'edgedetection',
-    HTTP_POST: 'http post',
-    HISTORY: 'history'
-  },
-  LogicalOperators: {
-    'eq': '==',
-    'neq': '!=',
-    'lt': '<',
-    'lte': '<=',
-    'gt': '>',
-    'gte': '>=',
-    'cont' : '~=',
-    'btwn': 'between',
-    'else': 'else'
-    /*
-    - not yet -
-    'regex' : 'regex',
-    'true' : '1',
-    'false' : '0',
-    'null' : 'null',
-    'nnull' : '!null',
-    */
-  },
-  NegatedLogicalOperators: {
-    'eq': 'neq',
-    'neq': 'eq',
-    'lt': 'gte',
-    'lte': 'gt',
-    'gt': 'lte',
-    'gte': 'lt',
-    'btwn': ''
-    /*
-    - not yet -
-    'cont' : 'contains',
-    'regex' : 'regex',
-    'true' : '1',
-    'false' : '0',
-    'null' : 'null',
-    'nnull' : '!null',
-    'else' : ''
-    */
-  },
-  ValueTypes: {
-    FLOAT: 'num',
-    STRING: 'str',
-    BOOL: 'bool'
-  },
-  GeoFenceMode : {
-    POLYLINE: 'polyline'
-  }
-}
-
-
-// Orion types as described in:
-// - https://jsapi.apiary.io/previews/null/introduction/specification/geographical-queries
-var OrionTypes = {
-  GeoFenceMode : {
-    POINT: 'point',
-    LINE: 'line',
-    POLYGON: 'polygon',
-    BOX: 'box'
-  },
-
-  GeoFenceOperator: {
-    NEAR: 'near',
-    COVEREDBY: 'coveredBy',
-    INTERSECTS: 'intersects',
-    EQUALS: 'equals',
-    DISJOINT: 'disjoint'
-  }
-}
-
-var PerseoTypes = {
-  ActionType: {
-    UPDATE: 'update',
-    POST: 'post',
-    EMAIL: 'email'
-  }
-}
-
-var requestTemplate = {
-  // Rule name
-  'name': '',
-
-  // List of variables that will be used for output generation
-  'variables': [],
-
-  // Variables created in flows that will be referenced in output
-  // nodes (supposedly)
-  'internalVariables': {},
-
-  // Conditions and their support data
-  'pattern': {
-    'fixedEventConditions' : [],
-    'fixedEventSubscriptionId' : '',
-    'firstEventConditions': [],
-    'firstEventSubscriptionId' : '',
-    'secondEventConditions': [],
-    'secondEventSubscriptionId' : ''
-  },
-
-  // Action taken by this rule
-  'action': {
-    // Where this action will take place.
-    'notificationEndpoint': '',
-
-    // One of the PerseoTypes.ActionType.
-    'type': '',
-
-    // Text to be included in the action. Depends on which action is taken
-    'template': '',
-
-    // Action parameters. Depend on which action is taken.
-    'parameters': {}
-  },
-
-  // Input device specification
-  'inputDevice': {
-    'type': '',
-    'id': '',
-    'attributes': []
-  }
-};
-
-var orionSubscriptionTemplate = {
-  'subscription' : {
-    'description': '',
-    'subject': {
-      'entities': []
-      // This attribute might include
-      // 'condition': {
-      //   'expression': {}
-      // }
-      // But if this is empty, it shouldn't exist
-    },
-    'notification': {
-      'http': {
-        url: ''
-      }
-      // This attribute might include
-      // attrs: []
-      // But if this is empty, it shouldn't exist
-    }
-  },
-  subscriptionOrder: '',
-  originalRequest: {}
-};
-
-var perseoRuleTemplate = {
-  'name' : '',
-  'text' : '',
-  'action' : {
-    'type' : '',
-    'template' : '',
-    'parameters' : {},
-    'mirror' : false
-  }
-}
-
-/**
- * Clone a simple object (without any functions)
- * @param {Simple JS object} obj The object to be cloned
- * @return The clone.
- */
-function cloneSimpleObject(obj) {
-  return JSON.parse(JSON.stringify(obj));
-}
-
-/**
- * Add an object to an array.
- * If the object is already in the array, nothing is changed.
- * @param {Array} array The array to be changed.
- * @param {*} obj The object to be added
- */
-function addUniqueToArray(array, obj) {
-  let found = false;
-  for (let i in array) {
-    if (array[i] === obj) {
-      found = true;
-    }
-  }
-  if (found == false) {
-    array.push(obj);
-  }
-}
+    resolver = require('./resolver'),
+    tools = require('./simple-tools'),
+    orchtypes = require('./orchestrator-types');
 
 
 /**
  * Check if a string is a valid geofence operator
- * It will be checked against OrionTypes.GeoFenceOperator values.
+ * It will be checked against orchtypes.OrionTypes.GeoFenceOperator values.
  * @param {string} op Geofence operator to be tested
  */
 function isValidGeoOperator(op) {
-  for (let validOperator in OrionTypes.GeoFenceOperator) {
-    if (op === OrionTypes.GeoFenceOperator[validOperator]) {
+  for (let validOperator in orchtypes.OrionTypes.GeoFenceOperator) {
+    if (op === orchtypes.OrionTypes.GeoFenceOperator[validOperator]) {
       return true;
     }
   }
   return false;
-}
-
-/**
- * Remove a prefix from a string.
- * This is useful to get rid of a "payload." in strings such as "payload.output.a".
- * In this case, the string "output.a" is returned.
- * @param {string} property The property string to be trimmed.
- * @param {string} keyword The keyword which will mark the beginning of the remaining string.
- * @return The remainder of the string, without the keywork.
- */
-function trimProperty(property, keyword) {
-  var payloadLength = keyword.length;
-  return property.slice(property.indexOf(keyword) + payloadLength);
-}
-
-/**
- * Tokenizes a string
- * @param {string} text The text to be tokenized
- * @param {string} token The token to be used
- * @return {Array} The tokenized string.
- */
-function tokenize(text, token) {
-  let ret = [];
-  let remainder = text;
-
-  let beginIndex = remainder.indexOf(token);
-  while (beginIndex >= 0) {
-    let begin = remainder.slice(0, beginIndex);
-    remainder = remainder.slice(beginIndex + token.length);
-    ret.push(begin);
-    beginIndex = remainder.indexOf(token);
-  }
-  ret.push(remainder);
-  return ret;
-}
-
-/**
- * Adds a particular parameter described by a 'path' into an object.
- *
- * For instance, suppose the following object:
- * obj = {
- *   descr : {
- *     owner : {
- *       name : 'user'
- *     }
- *   }
- * }
- *
- * Calling objectify(obj, 'descr.owner.resource.id', 12345) will generate:
- * {
- *   descr : {
- *     owner : {
- *       name : 'user',
- *       resource: {
- *         id: 12345
- *       }
- *     }
- *   }
- * }
- *
- * @param {Object} obj The object to be changed
- * @param {string} path The path to be added
- * @param {*} value The value to be associated to this path
- */
-function objectify(obj, path, value) {
-  if (path.length == 1) {
-    obj[path[0]] = value;
-  } else {
-    let currAttr = path[0];
-    path.shift();
-    if (obj[currAttr] == undefined) {
-      obj[currAttr] = {};
-    }
-    obj[currAttr] = objectify(obj[currAttr], path, value);
-  }
-  return obj;
 }
 
 /**
@@ -314,7 +42,7 @@ function addNegatedFixedEventCondition(node, request) {
     let ruleType = node.rules[ruleIx].vt;
 
     // If there is an opposite operator for this one.
-    if (ruleOperation in NodeRed.NegatedLogicalOperators) {
+    if (ruleOperation in orchtypes.NodeRed.NegatedLogicalOperators) {
       switch (ruleOperation) {
         case 'btwn':
           // 'Between' is simply greater than the minimum and less than the maximum.
@@ -327,32 +55,32 @@ function addNegatedFixedEventCondition(node, request) {
           // This is this node!
           break;
         default:
-          addFixedEventCondition(node, NodeRed.NegatedLogicalOperators[ruleOperation], ruleValue, ruleType, request);
+          addFixedEventCondition(node, orchtypes.NodeRed.NegatedLogicalOperators[ruleOperation], ruleValue, ruleType, request);
       }
     }
   }
 }
 
 function addEventCondition(node, ruleOperation, ruleValue, ruleType, request, eventConditionArray) {
-  if (ruleOperation in NodeRed.LogicalOperators) {
-    let nodeProperty = trimProperty(node.property, '.');
-    addUniqueToArray(request.variables, nodeProperty);
-    addUniqueToArray(request.inputDevice.attributes, nodeProperty);
-    eventConditionArray.push({'q' : nodeProperty + ' ' + NodeRed.LogicalOperators[ruleOperation] + ' ' + ruleValue });
+  if (ruleOperation in orchtypes.NodeRed.LogicalOperators) {
+    let nodeProperty = tools.trimProperty(node.property, '.');
+    tools.addUniqueToArray(request.variables, nodeProperty);
+    tools.addUniqueToArray(request.inputDevice.attributes, nodeProperty);
+    eventConditionArray.push({'q' : nodeProperty + ' ' + orchtypes.NodeRed.LogicalOperators[ruleOperation] + ' ' + ruleValue });
   } else if (isValidGeoOperator(ruleOperation)) {
     // Sanity checks
     if (ruleType == undefined || ruleValue == undefined || (ruleValue != undefined && ruleValue.length == 0)) {
       throw {retCode: 400, msg:'empty georeference node'}
     }
 
-    if (ruleType == NodeRed.GeoFenceMode.POLYLINE) {
+    if (ruleType == orchtypes.NodeRed.GeoFenceMode.POLYLINE) {
       // For now, georeferenced tests uses only one attribute.
       let expression = {
         'georel': ruleOperation,
         'coords': '',
         'geometry': ''
       };
-      expression.geometry = OrionTypes.GeoFenceMode.POLYGON;
+      expression.geometry = orchtypes.OrionTypes.GeoFenceMode.POLYGON;
       expression.coords = '';
       for (let i = 0; i < ruleValue.length; i++) {
         let point = ruleValue[i];
@@ -383,7 +111,7 @@ function extractFurtherNodes(objects, node, outputIx, request, requestList) {
     requestList.push(request);
   } else {
     for (let wire = 0; wire < node.wires[outputIx].length; wire++) {
-      let requestClone = cloneSimpleObject(request);
+      let requestClone = tools.cloneSimpleObject(request);
       let nextNode = objects[node.wires[outputIx][wire]];
       let result = extractDataFromNode(objects, nextNode, requestClone);
       requestList = requestList.concat(result);
@@ -399,8 +127,8 @@ function extractDataFromNode(objects, node, request) {
     //
     // INPUT NODES
     //
-    case NodeRed.NodeType.INPUT_DEVICE : {
-      let requestClone = cloneSimpleObject(request);
+    case orchtypes.NodeRed.NodeType.INPUT_DEVICE : {
+      let requestClone = tools.cloneSimpleObject(request);
       requestClone.inputDevice.type = node._device_type;
       requestClone.inputDevice.id = node._device_id;
       requestList = extractFurtherNodes(objects, node, 0, requestClone, requestList);
@@ -410,14 +138,14 @@ function extractDataFromNode(objects, node, request) {
     //
     // LOGIC NODES
     //
-    case NodeRed.NodeType.SWITCH : {
+    case orchtypes.NodeRed.NodeType.SWITCH : {
       for (let ruleIx = 0; ruleIx < node.rules.length; ruleIx++) {
         let ruleOperation = node.rules[ruleIx].t;
         let ruleValue = node.rules[ruleIx].v;
         let ruleType = node.rules[ruleIx].vt;
-        if (ruleOperation in NodeRed.LogicalOperators) {
+        if (ruleOperation in orchtypes.NodeRed.LogicalOperators) {
           // If this operator is supported.
-          let requestClone = cloneSimpleObject(request);
+          let requestClone = tools.cloneSimpleObject(request);
           switch (ruleOperation) {
             case 'btwn':
               let ruleLowerValue = ruleValue;
@@ -426,7 +154,7 @@ function extractDataFromNode(objects, node, request) {
               break;
             case 'else':
               addNegatedFixedEventCondition(node, requestClone);
-              addUniqueToArray(requestClone.inputDevice.attributes, trimProperty(node.property, '.'));
+              tools.addUniqueToArray(requestClone.inputDevice.attributes, tools.trimProperty(node.property, '.'));
               break;
             default:
               addFixedEventCondition(node, ruleOperation, ruleValue, ruleType, requestClone);
@@ -436,12 +164,12 @@ function extractDataFromNode(objects, node, request) {
       }
       break;
     }
-    case NodeRed.NodeType.EDGEDETECTION : {
+    case orchtypes.NodeRed.NodeType.EDGEDETECTION : {
       for (let ruleIx = 0; ruleIx < node.rules.length; ruleIx++) {
         let ruleOperation = node.rules[ruleIx].t;
         let ruleValue = node.rules[ruleIx].v;
         let ruleType = node.rules[ruleIx].vt;
-        let requestClone = cloneSimpleObject(request);
+        let requestClone = tools.cloneSimpleObject(request);
         switch (ruleOperation) {
           case 'edge-up':
             addFirstEventCondition(node, 'lt', ruleValue, ruleType, requestClone);
@@ -456,23 +184,23 @@ function extractDataFromNode(objects, node, request) {
       }
       break;
     }
-    case NodeRed.NodeType.GEOFENCE : {
+    case orchtypes.NodeRed.NodeType.GEOFENCE : {
       let ruleValue = node.points;
       let ruleType = node.mode;
       switch (node.filter) {
       case 'inside' :
-        addFixedEventCondition(node, OrionTypes.GeoFenceOperator.COVEREDBY, ruleValue, ruleType, request);
+        addFixedEventCondition(node, orchtypes.OrionTypes.GeoFenceOperator.COVEREDBY, ruleValue, ruleType, request);
         break;
       case 'outside' :
-        addFixedEventCondition(node, OrionTypes.GeoFenceOperator.DISJOINT, ruleValue, ruleType, request);
+        addFixedEventCondition(node, orchtypes.OrionTypes.GeoFenceOperator.DISJOINT, ruleValue, ruleType, request);
         break;
       case 'enters' :
-        addFirstEventCondition(node, OrionTypes.GeoFenceOperator.DISJOINT, ruleValue, ruleType, request);
-        addSecondEventCondition(node, OrionTypes.GeoFenceOperator.COVEREDBY, ruleValue, ruleType, request);
+        addFirstEventCondition(node, orchtypes.OrionTypes.GeoFenceOperator.DISJOINT, ruleValue, ruleType, request);
+        addSecondEventCondition(node, orchtypes.OrionTypes.GeoFenceOperator.COVEREDBY, ruleValue, ruleType, request);
         break;
       case 'exits':
-        addFirstEventCondition(node, OrionTypes.GeoFenceOperator.COVEREDBY, ruleValue, ruleType, request);
-        addSecondEventCondition(node, OrionTypes.GeoFenceOperator.DISJOINT, ruleValue, ruleType, request);
+        addFirstEventCondition(node, orchtypes.OrionTypes.GeoFenceOperator.COVEREDBY, ruleValue, ruleType, request);
+        addSecondEventCondition(node, orchtypes.OrionTypes.GeoFenceOperator.DISJOINT, ruleValue, ruleType, request);
         break;
       }
       requestList = extractFurtherNodes(objects, node, 0, request, requestList);
@@ -482,29 +210,29 @@ function extractDataFromNode(objects, node, request) {
     //
     // CONTENT GENERATION NODES
     //
-    case NodeRed.NodeType.CHANGE : {
+    case orchtypes.NodeRed.NodeType.CHANGE : {
       for (let ruleIx = 0; ruleIx < node.rules.length; ruleIx++) {
         // Add a new internal variable to be referenced by other nodes.
         // All new structures will be assembled during after flow analysis (before request translation)
-        let path = tokenize(node.rules[ruleIx].p, '.');
+        let path = tools.tokenize(node.rules[ruleIx].p, '.');
         if (node.rules[ruleIx].tot === 'msg') {
           // Referenced variable
-          objectify(request.internalVariables, path, '{{' + node.rules[ruleIx].to + '}}');
+          tools.objectify(request.internalVariables, path, '{{' + node.rules[ruleIx].to + '}}');
         } else {
           // Referenced variable
-          objectify(request.internalVariables, path, node.rules[ruleIx].to);
+          tools.objectify(request.internalVariables, path, node.rules[ruleIx].to);
         }
       }
 
       requestList = extractFurtherNodes(objects, node, 0, request, requestList);
       break;
     }
-    case NodeRed.NodeType.TEMPLATE : {
+    case orchtypes.NodeRed.NodeType.TEMPLATE : {
       // Add a new internal variable to be referenced by other nodes.
       // All new structures will be assembled during after flow analysis (before request translation)
-      let path = tokenize(node.field, '.');
+      let path = tools.tokenize(node.field, '.');
       // Referenced variable
-      objectify(request.internalVariables, path, node.template);
+      tools.objectify(request.internalVariables, path, node.template);
 
       requestList = extractFurtherNodes(objects, node, 0, request, requestList);
       break;
@@ -513,9 +241,9 @@ function extractDataFromNode(objects, node, request) {
     //
     // OUTPUT NODES
     //
-    case NodeRed.NodeType.OUTPUT_DEVICE : {
+    case orchtypes.NodeRed.NodeType.OUTPUT_DEVICE : {
       request.action.notificationEndpoint = config.perseo_fe.url + '/noticesv2'
-      request.action.type = PerseoTypes.ActionType.UPDATE;
+      request.action.type = orchtypes.PerseoTypes.ActionType.UPDATE;
       request.action.parameters = {
         'id' : node._device_id,
         'type' : node._device_type,
@@ -526,9 +254,9 @@ function extractDataFromNode(objects, node, request) {
       break;
     }
 
-    case NodeRed.NodeType.HTTP_REQUEST:
+    case orchtypes.NodeRed.NodeType.HTTP_REQUEST:
       request.action.notificationEndpoint = config.perseo_fe.url + '/noticesv2'
-      request.action.type = PerseoTypes.ActionType.POST;
+      request.action.type = orchtypes.PerseoTypes.ActionType.POST;
       request.action.template = node.body;
       request.action.parameters = {
         'url' : node.url,
@@ -545,9 +273,9 @@ function extractDataFromNode(objects, node, request) {
       requestList.push(request);
       break;
 
-    case NodeRed.NodeType.EMAIL:
+    case orchtypes.NodeRed.NodeType.EMAIL:
       request.action.notificationEndpoint = config.perseo_fe.url + '/noticesv2'
-      request.action.type = PerseoTypes.ActionType.EMAIL;
+      request.action.type = orchtypes.PerseoTypes.ActionType.EMAIL;
       request.action.parameters = {
         'to' : node.to,
         'from' : node.from,
@@ -558,7 +286,7 @@ function extractDataFromNode(objects, node, request) {
       requestList.push(request);
       break;
 
-    case NodeRed.NodeType.HISTORY:
+    case orchtypes.NodeRed.NodeType.HISTORY:
       request.action.notificationEndpoint = config.cygnus.url + "/notify";
 
       requestList.push(request);
@@ -591,7 +319,7 @@ function transformToOrionSubscriptions(requests) {
   let orionSubscriptions = [];
   for (let i = 0; i < requests.length; i++) {
     let request = requests[i];
-    let orionSubscription = cloneSimpleObject(orionSubscriptionTemplate);
+    let orionSubscription = tools.cloneSimpleObject(orchtypes.orionSubscriptionTemplate);
     orionSubscription.subscription.description = 'Subscription for ' + requests[i].inputDevice.id;
     orionSubscription.subscription.subject.entities.push( {
       'type' : request.inputDevice.type,
@@ -613,14 +341,14 @@ function transformToOrionSubscriptions(requests) {
       }
 
       // Create the first subscription
-      let orionSubsClone = cloneSimpleObject(orionSubscription);
+      let orionSubsClone = tools.cloneSimpleObject(orionSubscription);
       orionSubsClone.originalRequest = requests[i];
       orionSubsClone.subscriptionOrder = 1;
       concatenateExpression(orionSubsClone.subscription.subject.condition.expression, request.pattern.firstEventConditions);
       orionSubscriptions.push(orionSubsClone);
 
       // Create the second subscription
-      orionSubsClone = cloneSimpleObject(orionSubscription);
+      orionSubsClone = tools.cloneSimpleObject(orionSubscription);
       orionSubsClone.originalRequest = requests[i];
       orionSubsClone.subscriptionOrder = 2;
       concatenateExpression(orionSubsClone.subscription.subject.condition.expression, request.pattern.secondEventConditions);
@@ -647,17 +375,17 @@ function transformToPerseoRequest(request) {
     used: []
   };
 
-  let perseoRule = cloneSimpleObject(perseoRuleTemplate);
+  let perseoRule = tools.cloneSimpleObject(orchtypes.perseoRuleTemplate);
 
   perseoRule.name = request.name;
 
   // Processing actions - all referenced variables will be translated
   perseoRule.action.type = request.action.type;
   switch (request.action.type) {
-    case PerseoTypes.ActionType.UPDATE: {
+    case orchtypes.PerseoTypes.ActionType.UPDATE: {
       // Only attributes should be updated.
       let attributesVar = request.action.parameters.attributes;
-      varAccess = resolver.accessVariable(request.internalVariables, tokenize(attributesVar, '.'));
+      varAccess = resolver.accessVariable(request.internalVariables, tools.tokenize(attributesVar, '.'));
       if (varAccess.result !== 'ok') {
         throw "failure";
       }
@@ -683,11 +411,11 @@ function transformToPerseoRequest(request) {
         }
       }
       for (let i = 0; i < specialVars.used.length; i++){
-        addUniqueToArray(request.variables, specialVars.used[i]);
+        tools.addUniqueToArray(request.variables, specialVars.used[i]);
       }
     }
     break;
-    case PerseoTypes.ActionType.POST : {
+    case orchtypes.PerseoTypes.ActionType.POST : {
       // Translate body
       let postBodyVar = request.action.template;
       let resolvedVariables;
@@ -697,7 +425,7 @@ function transformToPerseoRequest(request) {
         perseoRule.action.template = 'dummy-template';
       } else {
         perseoRule.action.mirror = false;
-        varAccess = resolver.accessVariable(request.internalVariables, tokenize(postBodyVar, '.'));
+        varAccess = resolver.accessVariable(request.internalVariables, tools.tokenize(postBodyVar, '.'));
         if (varAccess.result !== 'ok') {
           throw "failure";
         }
@@ -705,7 +433,7 @@ function transformToPerseoRequest(request) {
         let resolvedVariables = resolver.resolveVariables(request.internalVariables, postBody, specialVars);
         perseoRule.action.template = resolvedVariables.data;
         for (let i = 0; i < specialVars.used.length; i++){
-          addUniqueToArray(request.variables, specialVars.used[i]);
+          tools.addUniqueToArray(request.variables, specialVars.used[i]);
         }
       }
 
@@ -715,7 +443,7 @@ function transformToPerseoRequest(request) {
         resolvedVariables = resolver.resolveVariables(request.internalVariables, request.internalVariables['url'], specialVars);
         perseoRule.action.parameters.url = resolvedVariables.data;
         for (let i = 0; i < specialVars.used.length; i++){
-          addUniqueToArray(request.variables, specialVars.used[i]);
+          tools.addUniqueToArray(request.variables, specialVars.used[i]);
         }
       }
 
@@ -723,7 +451,7 @@ function transformToPerseoRequest(request) {
         resolvedVariables = resolver.resolveVariables(request.internalVariables, request.internalVariables['method'], specialVars);
         perseoRule.action.parameters.method = resolvedVariables.data;
         for (let i = 0; i < specialVars.used.length; i++){
-          addUniqueToArray(request.variables, specialVars.used[i]);
+          tools.addUniqueToArray(request.variables, specialVars.used[i]);
         }
       }
 
@@ -736,7 +464,7 @@ function transformToPerseoRequest(request) {
           resolvedVariables = resolver.resolveVariables(request.internalVariables, headers, specialVars);
         }
         for (let i = 0; i < specialVars.used.length; i++){
-          addUniqueToArray(request.variables, specialVars.used[i]);
+          tools.addUniqueToArray(request.variables, specialVars.used[i]);
         }
         perseoRule.action.parameters.headers = JSON.parse(resolvedVariables.data);
       } else {
@@ -744,10 +472,10 @@ function transformToPerseoRequest(request) {
       }
     }
     break;
-    case PerseoTypes.ActionType.EMAIL : {
+    case orchtypes.PerseoTypes.ActionType.EMAIL : {
       // Translate body
       let emailBodyVar = request.action.parameters.body;
-      varAccess = resolver.accessVariable(request.internalVariables, tokenize(emailBodyVar, '.'));
+      varAccess = resolver.accessVariable(request.internalVariables, tools.tokenize(emailBodyVar, '.'));
       if (varAccess.result !== 'ok') {
         throw "failure";
       }
@@ -756,7 +484,7 @@ function transformToPerseoRequest(request) {
       perseoRule.action.parameters = request.action.parameters;
       perseoRule.action.parameters.body = resolvedVariables.data;
       for (let i = 0; i < specialVars.used.length; i++){
-        addUniqueToArray(request.variables, specialVars.used[i]);
+        tools.addUniqueToArray(request.variables, specialVars.used[i]);
       }
     }
     break;
@@ -831,7 +559,7 @@ function translateMashup(mashupJson) {
 
   for (var id in objects) {
     if (objects[id].type == 'device out') {
-      let emptyRequest = cloneSimpleObject(requestTemplate);
+      let emptyRequest = tools.cloneSimpleObject(orchtypes.requestTemplate);
       let requests = extractDataFromNode(objects, objects[id], emptyRequest, objects[id].device);
       // Name all requests
       for (let i = 0; i < requests.length; i++) {

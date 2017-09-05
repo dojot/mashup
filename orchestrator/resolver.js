@@ -91,6 +91,18 @@ function expandVariable(obj, variable, specialVars, varTracking) {
 }
 
 
+/**
+ * Converts a moustache-encoded string into a bash-like text, returning
+ * all used variables.
+ *
+ * Example:
+ * let text: "Attributes {{payload.attr1}} and {{payload.attr2}}"
+ * Calling resolveVariabled(text) will return
+ * translatedTemplate:  "Attributes ${attr1} and ${attr2}"
+ * inputVariables: ["attr1", "attr2"]
+ *
+ * @param {string} template The template to be transformed
+ */
 function resolveVariables(obj, text, specialVars, varTracking) {
   let ret = {
     'result' : 'ok',
