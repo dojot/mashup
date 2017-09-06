@@ -49,7 +49,8 @@
               "1052bb8e.79ca2c"
           ],
           [
-            "1052bb8f.79ca2d"
+            "1052bb8f.79ca2d",
+            "1052bb8f.12345"
           ]
       ]
   },
@@ -91,6 +92,33 @@
             "p": "output.result",
             "pt": "msg",
             "to": "no",
+            "tot": "str"
+        }
+    ],
+    "action": "",
+    "property": "",
+    "from": "",
+    "to": "",
+    "reg": false,
+    "x": 588,
+    "y": 262.8500061035156,
+    "wires": [
+        [
+            "dfd7c1a6.8c917"
+        ]
+    ]
+  },
+  {
+    "id": "1052bb8f.12345",
+    "type": "change",
+    "z": "6a666fff.bfb128",
+    "name": "",
+    "rules": [
+        {
+            "t": "set",
+            "p": "output.result2",
+            "pt": "msg",
+            "to": "not-so-much",
             "tot": "str"
         }
     ],
