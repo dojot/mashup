@@ -459,7 +459,7 @@ function extractDataFromNode(objects, node, request) {
               break;
             case 'else':
               addNegatedFixedEventCondition(node, requestClone);
-              requestClone.inputDevice.attributes.push(trimProperty(node.property, '.'));
+              addUniqueToArray(requestClone.inputDevice.attributes, trimProperty(node.property, '.'));
               break;
             default:
               addFixedEventCondition(node, ruleOperation, ruleValue, ruleType, requestClone);
@@ -630,13 +630,6 @@ function transformToOrionSubscriptions(requests) {
       'type' : request.inputDevice.type,
       'id' : request.inputDevice.id
     });
-
-    // Filling fixed conditions
-    for (let condition in request.fixedEventConditions) {
-      if (request.fixedEventConditions.hasOwnProperty(condition)) {
-        orionSubscription.subscription.subject['condition']['expression'][condition] += request.fixedConditions[condition];
-      }
-    }
 
     orionSubscription.subscription.notification.http.url = request.action.notificationEndpoint;
 
