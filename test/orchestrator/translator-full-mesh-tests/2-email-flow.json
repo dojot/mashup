@@ -26,7 +26,7 @@
     "type": "template",
     "z": "6a666fff.bfb128",
     "name": "",
-    "field": "emailBody",
+    "field": "output.emailBody",
     "fieldType": "msg",
     "format": "handlebars",
     "syntax": "mustache",
@@ -52,7 +52,7 @@
       "to": "to@user.com",
       "from": "from@user.com",
       "subject": "You've got e-mail",
-      "body": "emailBody",
+      "body": "output",
       "x": 886,
       "y": 294.7166748046875,
       "wires": []

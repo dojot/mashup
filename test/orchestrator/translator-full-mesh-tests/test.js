@@ -598,7 +598,7 @@ function execute() {
                     "subject": "You've got e-mail",
                     "to": "to@user.com"
                   },
-                  "template": "This is an email body with ${attr1} and ${attr2}\n", "mirror": false,
+                  "template": "{\"emailBody\":\"This is an email body with ${attr1} and ${attr2}\\n\"}", "mirror": false,
                   "type": "email"
                 },
                 "name": "rule_6a666fff_bfb128_1",

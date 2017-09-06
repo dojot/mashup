@@ -773,6 +773,9 @@ function transformToPerseoRequest(request) {
       // Translate body
       let emailBodyVar = request.action.template;
       let emailBody = request.internalVariables[emailBodyVar];
+      if (typeof emailBody === 'object') {
+        emailBody = JSON.stringify(emailBody);
+      }
       let resolvedVariables = resolveVariables(emailBody);
       perseoRule.action.parameters = request.action.parameters;
       perseoRule.action.template = resolvedVariables.translatedTemplate;
