@@ -585,9 +585,9 @@ function extractDataFromNode(objects, node, request) {
         'to' : node.to,
         'from' : node.from,
         'subject' : node.subject,
-        'smtp' : node.server,
-        'body' : node.body
+        'smtp' : node.server
       };
+      request.action.template = node.body;
       requestList.push(request);
       break;
 
@@ -771,11 +771,11 @@ function transformToPerseoRequest(request) {
     break;
     case PerseoTypes.ActionType.EMAIL : {
       // Translate body
-      let emailBodyVar = request.action.parameters.body;
+      let emailBodyVar = request.action.template;
       let emailBody = request.internalVariables[emailBodyVar];
       let resolvedVariables = resolveVariables(emailBody);
       perseoRule.action.parameters = request.action.parameters;
-      perseoRule.action.parameters.body = resolvedVariables.translatedTemplate;
+      perseoRule.action.template = resolvedVariables.translatedTemplate;
       for (let i = 0; i < resolvedVariables.inputVariables.length; i++){
         addUniqueToArray(request.variables, resolvedVariables.inputVariables[i]);
       }

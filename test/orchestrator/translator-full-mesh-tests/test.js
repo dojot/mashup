@@ -540,13 +540,12 @@ function execute() {
               "perseoRequest": {
                 "action": {
                   "parameters": {
-                    "body": "yes",
                     "from": "from@user.com",
                     "smtp": "gmail-smtp-in.l.google.com",
                     "subject": "You've got e-mail",
                     "to": "to@user.com"
                   },
-                  "template": "", "mirror": false,
+                  "template": "yes", "mirror": false,
                   "type": "email"
                 },
                 "name": "rule_6a666fff_bfb128_1",
@@ -594,13 +593,12 @@ function execute() {
               "perseoRequest": {
                 "action": {
                   "parameters": {
-                    "body": "This is an email body with ${attr1} and ${attr2}\n",
                     "from": "from@user.com",
                     "smtp": "gmail-smtp-in.l.google.com",
                     "subject": "You've got e-mail",
                     "to": "to@user.com"
                   },
-                  "template": "", "mirror": false,
+                  "template": "This is an email body with ${attr1} and ${attr2}\n", "mirror": false,
                   "type": "email"
                 },
                 "name": "rule_6a666fff_bfb128_1",

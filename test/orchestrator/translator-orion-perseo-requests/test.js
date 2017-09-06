@@ -751,13 +751,12 @@ describe('Generate Perseo rule with UPDATE action', function() {
             "action": {
               "notificationEndpoint": "perseo-endpoint",
               "type": "email",
-              "template": "", "mirror": false,
+              "template": "email-body", "mirror": false,
               "parameters": {
                 "to" : "to@user.com",
                 "from" : "from@user.com",
                 "subject" : "This is a test",
-                "smtp" : "smtp@server.com",
-                "body" : "email-body"
+                "smtp" : "smtp@server.com"
               }
             },
             "inputDevice": {
@@ -772,10 +771,9 @@ describe('Generate Perseo rule with UPDATE action', function() {
                 "to" : "to@user.com",
                 "from" : "from@user.com",
                 "subject" : "This is a test",
-                "smtp" : "smtp@server.com",
-                "body" : "This is an email body with ${temperature}"
+                "smtp" : "smtp@server.com"
               },
-              "template": "", "mirror": false,
+              "template": "This is an email body with ${temperature}", "mirror": false,
               "type": "email",
             },
             "name": "simple-rule-1",
