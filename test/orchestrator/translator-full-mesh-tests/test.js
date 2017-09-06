@@ -610,6 +610,59 @@ function execute() {
           }
         });
       });
+
+
+      it('should generate an email request with self-created variable references', function(done) {
+        var mashup = fs.readFile(__dirname+ '/3-template-flow.json', 'utf8', function(err, data) {
+          try {
+            let expected = {
+              "subscription": {
+                "description": "Subscription for input-device-id",
+                "notification": {
+                  "http": {
+                    "url": "http://perseo-fe:9090/noticesv2"
+                  }
+                },
+                "subject": {
+                  "entities": [
+                    {
+                      "id": "input-device-id",
+                      "type": "device"
+                    }
+                  ]
+                }
+              },
+              "perseoRequest": {
+                "action": {
+                  "parameters": {
+                    "body": "Value went up to ${a}",
+                    "from": "from-mail@mail.com",
+                    "smtp": "smtp-server",
+                    "subject": "Value update",
+                    "to": "to-mail@mail.com"
+                  },
+                  "template" : "", "mirror": false,
+                  "type": "email"
+                },
+                "name": "rule_f77ff6a8_86454_1",
+                "text": "select *, \"rule_f77ff6a8_86454_1\" as ruleName, ev.a? as a from pattern [every ev = iotEvent(cast(subscriptionId?, String) = \"12345\")]"
+              }
+            };
+            let flow = JSON.parse(data);
+            let result = translator.translateMashup(flow);
+            expect(result.length).equal(1);
+            expect(result[0].subscription).to.deep.equal(expected.subscription);
+
+            let perseoRequest = translator.generatePerseoRequest(12345, 0, result[0].originalRequest);
+            expect(perseoRequest).not.equal(undefined);
+            expect(perseoRequest).to.deep.equal(expected.perseoRequest);
+
+            done();
+          } catch (error) {
+            done(error);
+          }
+        });
+      });
     });
 
     describe('Basic email flow with change node', function() {
