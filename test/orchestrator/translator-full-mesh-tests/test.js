@@ -57,8 +57,8 @@ function execute() {
                   "template": "", "mirror": false,
                   "type": "update"
                 },
-                "name": "rule_6a666fff_bfb128_1",
-                "text": "select *, \"rule_6a666fff_bfb128_1\" as ruleName, ev.attr1? as attr1 from pattern [every ev = iotEvent(cast(subscriptionId?, String) = \"12345\")]"
+                "name": "rule_ad42e337_a4e128_1",
+                "text": "select *, \"rule_ad42e337_a4e128_1\" as ruleName, ev.attr1? as attr1 from pattern [every ev = iotEvent(cast(subscriptionId?, String) = \"12345\")]"
               }
             };
             expect(result.length).equal(1);
@@ -125,8 +125,8 @@ function execute() {
                   "template": "", "mirror": false,
                   "type": "update"
                 },
-                "name": "rule_6a666fff_bfb128_1",
-                "text": "select *, \"rule_6a666fff_bfb128_1\" as ruleName, ev.attr1? as attr1 from pattern [every ev = iotEvent(cast(subscriptionId?, String) = \"12345\")]"
+                "name": "rule_ad42e337_a4e128_1",
+                "text": "select *, \"rule_ad42e337_a4e128_1\" as ruleName, ev.attr1? as attr1 from pattern [every ev = iotEvent(cast(subscriptionId?, String) = \"12345\")]"
               }
             },
             {
@@ -170,8 +170,8 @@ function execute() {
                   "template": "", "mirror": false,
                   "type": "update"
                 },
-                "name": "rule_6a666fff_bfb128_2",
-                "text": "select *, \"rule_6a666fff_bfb128_2\" as ruleName, ev.attr1? as attr1 from pattern [every ev = iotEvent(cast(subscriptionId?, String) = \"123456\")]"
+                "name": "rule_ad42e337_a4e128_2",
+                "text": "select *, \"rule_ad42e337_a4e128_2\" as ruleName, ev.attr1? as attr1 from pattern [every ev = iotEvent(cast(subscriptionId?, String) = \"123456\")]"
               }
             },
             ];
@@ -231,8 +231,8 @@ function execute() {
                   "template": "", "mirror": false,
                   "type": "update"
                 },
-                "name": "rule_6a666fff_bfb128_1",
-                "text": "select *, \"rule_6a666fff_bfb128_1\" as ruleName from pattern [every ev = iotEvent(cast(subscriptionId?, String) = \"12345\")]"
+                "name": "rule_ad42e337_a4e128_1",
+                "text": "select *, \"rule_ad42e337_a4e128_1\" as ruleName from pattern [every ev = iotEvent(cast(subscriptionId?, String) = \"12345\")]"
               }
             };
             let flow = JSON.parse(data);
@@ -327,8 +327,8 @@ function execute() {
                   "template": "", "mirror": false,
                   "type": "update"
                 },
-                "name": "rule_6a666fff_bfb128_1",
-                "text": "select *, \"rule_6a666fff_bfb128_1\" as ruleName, ev2.attr1? as attr1 from pattern [every ev = iotEvent(cast(subscriptionId?, String) = \"12345\") -> ev2 = iotEvent(cast(subscriptionId?, String) = \"123456\")]"
+                "name": "rule_947704f7_a87f4_1",
+                "text": "select *, \"rule_947704f7_a87f4_1\" as ruleName, ev2.attr1? as attr1 from pattern [every ev = iotEvent(cast(subscriptionId?, String) = \"12345\") -> ev2 = iotEvent(cast(subscriptionId?, String) = \"123456\")]"
               }
             },
             ];
@@ -426,8 +426,8 @@ function execute() {
                   "template": "", "mirror": false,
                   "type": "update"
                 },
-                "name": "rule_6a666fff_bfb128_1",
-                "text": "select *, \"rule_6a666fff_bfb128_1\" as ruleName, ev2.attr1? as attr1, ev2.attr2? as attr2 from pattern [every ev = iotEvent(cast(subscriptionId?, String) = \"12345\") -> ev2 = iotEvent(cast(subscriptionId?, String) = \"123456\")]"
+                "name": "rule_947704f7_a87f4_1",
+                "text": "select *, \"rule_947704f7_a87f4_1\" as ruleName, ev2.attr1? as attr1, ev2.attr2? as attr2 from pattern [every ev = iotEvent(cast(subscriptionId?, String) = \"12345\") -> ev2 = iotEvent(cast(subscriptionId?, String) = \"123456\")]"
               }
             },
             ];
@@ -492,8 +492,8 @@ function execute() {
                   "template": "", "mirror": false,
                   "type": "update"
                 },
-                "name": "rule_6a666fff_bfb128_1",
-                "text": "select *, \"rule_6a666fff_bfb128_1\" as ruleName, ev.attr1? as attr1, ev.attr2? as attr2 from pattern [every ev = iotEvent(cast(subscriptionId?, String) = \"12345\")]"
+                "name": "rule_947704f7_a87f4_1",
+                "text": "select *, \"rule_947704f7_a87f4_1\" as ruleName, ev.attr1? as attr1, ev.attr2? as attr2 from pattern [every ev = iotEvent(cast(subscriptionId?, String) = \"12345\")]"
               }
             };
             let flow = JSON.parse(data);
@@ -549,8 +549,8 @@ function execute() {
                   "template": "", "mirror": false,
                   "type": "email"
                 },
-                "name": "rule_6a666fff_bfb128_1",
-                "text": "select *, \"rule_6a666fff_bfb128_1\" as ruleName from pattern [every ev = iotEvent(cast(subscriptionId?, String) = \"12345\")]"
+                "name": "rule_ad42e337_a4e128_1",
+                "text": "select *, \"rule_ad42e337_a4e128_1\" as ruleName from pattern [every ev = iotEvent(cast(subscriptionId?, String) = \"12345\")]"
               }
             };
             expect(result.length).equal(1);
@@ -603,8 +603,8 @@ function execute() {
                   "template": "", "mirror": false,
                   "type": "email"
                 },
-                "name": "rule_6a666fff_bfb128_1",
-                "text": "select *, \"rule_6a666fff_bfb128_1\" as ruleName, ev.attr1? as attr1, ev.attr2? as attr2 from pattern [every ev = iotEvent(cast(subscriptionId?, String) = \"12345\")]"
+                "name": "rule_ad42e337_a4e128_1",
+                "text": "select *, \"rule_ad42e337_a4e128_1\" as ruleName, ev.attr1? as attr1, ev.attr2? as attr2 from pattern [every ev = iotEvent(cast(subscriptionId?, String) = \"12345\")]"
               }
             };
             expect(result.length).equal(1);
@@ -659,8 +659,8 @@ function execute() {
                   "mirror": false,
                   "type" : "post"
                 },
-                "name": "rule_456c7496_ac5c64_1",
-                "text": "select *, \"rule_456c7496_ac5c64_1\" as ruleName from pattern [every ev = iotEvent(cast(subscriptionId?, String) = \"12345\")]"
+                "name": "rule_2219ef6d_fba688_1",
+                "text": "select *, \"rule_2219ef6d_fba688_1\" as ruleName from pattern [every ev = iotEvent(cast(subscriptionId?, String) = \"12345\")]"
               }
             };
             expect(result.length).equal(1);
@@ -715,8 +715,8 @@ function execute() {
                   "mirror": false,
                   "type" : "post"
                 },
-                "name": "rule_456c7496_ac5c64_1",
-                "text": "select *, \"rule_456c7496_ac5c64_1\" as ruleName from pattern [every ev = iotEvent(cast(subscriptionId?, String) = \"12345\")]"
+                "name": "rule_2219ef6d_fba688_1",
+                "text": "select *, \"rule_2219ef6d_fba688_1\" as ruleName from pattern [every ev = iotEvent(cast(subscriptionId?, String) = \"12345\")]"
               }
             };
             expect(result.length).equal(1);
@@ -771,8 +771,8 @@ function execute() {
                   "mirror": false,
                   "type" : "post"
                 },
-                "name": "rule_456c7496_ac5c64_1",
-                "text": "select *, \"rule_456c7496_ac5c64_1\" as ruleName, ev.attr1? as attr1 from pattern [every ev = iotEvent(cast(subscriptionId?, String) = \"12345\")]"
+                "name": "rule_2219ef6d_fba688_1",
+                "text": "select *, \"rule_2219ef6d_fba688_1\" as ruleName, ev.attr1? as attr1 from pattern [every ev = iotEvent(cast(subscriptionId?, String) = \"12345\")]"
               }
             };
             expect(result.length).equal(1);
@@ -828,8 +828,8 @@ function execute() {
                   "mirror": false,
                   "type" : "post"
                 },
-                "name": "rule_456c7496_ac5c64_1",
-                "text": "select *, \"rule_456c7496_ac5c64_1\" as ruleName, ev.attr1? as attr1 from pattern [every ev = iotEvent(cast(subscriptionId?, String) = \"12345\")]"
+                "name": "rule_2219ef6d_fba688_1",
+                "text": "select *, \"rule_2219ef6d_fba688_1\" as ruleName, ev.attr1? as attr1 from pattern [every ev = iotEvent(cast(subscriptionId?, String) = \"12345\")]"
               }
             };
             expect(result.length).equal(1);
@@ -885,8 +885,8 @@ function execute() {
                   "mirror": false,
                   "type" : "post"
                 },
-                "name": "rule_456c7496_ac5c64_1",
-                "text": "select *, \"rule_456c7496_ac5c64_1\" as ruleName, ev.attr1? as attr1 from pattern [every ev = iotEvent(cast(subscriptionId?, String) = \"12345\")]"
+                "name": "rule_2219ef6d_fba688_1",
+                "text": "select *, \"rule_2219ef6d_fba688_1\" as ruleName, ev.attr1? as attr1 from pattern [every ev = iotEvent(cast(subscriptionId?, String) = \"12345\")]"
               }
             };
             expect(result.length).equal(1);
@@ -942,8 +942,8 @@ function execute() {
                   "mirror": true,
                   "type" : "post"
                 },
-                "name": "rule_456c7496_ac5c64_1",
-                "text": "select *, \"rule_456c7496_ac5c64_1\" as ruleName, ev.attr1? as attr1 from pattern [every ev = iotEvent(cast(subscriptionId?, String) = \"12345\")]"
+                "name": "rule_2219ef6d_fba688_1",
+                "text": "select *, \"rule_2219ef6d_fba688_1\" as ruleName, ev.attr1? as attr1 from pattern [every ev = iotEvent(cast(subscriptionId?, String) = \"12345\")]"
               }
             };
             expect(result.length).equal(1);

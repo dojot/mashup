@@ -856,7 +856,7 @@ function translateMashup(mashupJson) {
       let requests = extractDataFromNode(objects, objects[id], emptyRequest, objects[id].device);
       // Name all requests
       for (let i = 0; i < requests.length; i++) {
-        requests[i].name = 'rule_' + objects[id].z.replace('.', '_') + '_' + (i + 1);
+        requests[i].name = 'rule_' + id.replace('.', '_') + '_' + (i + 1);
       }
       let tempResults = transformToOrionSubscriptions(requests);
       orionSubscriptions = orionSubscriptions.concat(tempResults);
