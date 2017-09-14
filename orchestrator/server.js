@@ -58,7 +58,7 @@ function processGetFlows(httpRequest, httpResponse) {
   var flowHeader = extractFiwareHeaders(httpRequest.headers);
   console.log('Received a GET request for all flows');
   console.log('Flow headers are ' + util.inspect(flowHeader, {showHidden: false, depth: null}));
-  orchestratorDb.find({service: flowHeader['Fiware-Service']}, {_id: 0}).toArray(function (err, flows) {
+  orchestratorDb.find({service: flowHeader['Fiware-Service']}, {perseoRules: 0, orionSubscriptionsV2: 0, _id: 0}).toArray(function (err, flows) {
     if (err) {
       console.log('An error occurred: ' + err);
       httpResponse.status(500).send({msg: 'failed to retrieve data'});
@@ -94,13 +94,16 @@ function processGetFlow(httpRequest, httpResponse) {
   var flowHeader = extractFiwareHeaders(httpRequest.headers);
   console.log('Received a GET request for flow: ' + httpRequest.params.flowid);
   console.log('Flow headers are ' + util.inspect(flowHeader, {showHidden: false, depth: null}));
-  orchestratorDb.findOne({service: flowHeader['Fiware-Service'], id: httpRequest.params.flowid}, function(err, flow) {
+  orchestratorDb.findOne({service: flowHeader['Fiware-Service'], id: httpRequest.params.flowid}, {perseoRules: 0, orionSubscriptionsV2: 0}, function(err, flow) {
     if (err) {
       console.log('An error occurred: ' + err);
       httpResponse.status(500).send({msg: 'failed to retrieve data'});
     } else {
-      console.log('Returning flow: ');
+      console.log('Returning filtered flow: ');
       console.log(util.inspect(flow, {showHidden: false, depth: null}));
+
+
+
 
       httpResponse.status(200).send({msg: 'ok', flow: flow});
     }
