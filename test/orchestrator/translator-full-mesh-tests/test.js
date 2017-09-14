@@ -10,8 +10,8 @@ var expect = chai.expect;
 
 function execute() {
   describe('Full tests', function() {
-    describe('Basic switch-change flow', function() {
-      it('should generate all request correctly', function(done) {
+    describe('Switch-change flow', function() {
+      it('should give no errors for simple switch-change', function(done) {
         var mashup = fs.readFile(__dirname+ '/1-switch-change-flow.json', 'utf8', function(err, data) {
           try {
             let flow = JSON.parse(data);
@@ -74,11 +74,9 @@ function execute() {
           }
         });
       });
-    });
 
 
-    describe('Double switch-change flow', function() {
-      it('should generate all request correctly', function(done) {
+      it('should give no errors with switch node with multiple rules', function(done) {
         var mashup = fs.readFile(__dirname+ '/2-switch-change-flow.json', 'utf8', function(err, data) {
           try {
             let flow = JSON.parse(data);
@@ -174,10 +172,56 @@ function execute() {
                 "text": "select *, \"rule_6a666fff_bfb128_2\" as ruleName, ev.attr1? as attr1 from pattern [every ev = iotEvent(cast(subscriptionId?, String) = \"123456\")]"
               }
             },
+            {
+              "subscription": {
+                "description": "Subscription for input-device-id",
+                "notification": {
+                  "http": {
+                    "url": "http://perseo-fe:9090/noticesv2"
+                  }
+                },
+                "subject": {
+                  "condition": {
+                    "attrs": [
+                      "attr1"
+                    ],
+                    "expression": {
+                      "q": "attr1 == 200"
+                    }
+                  },
+                  "entities": [
+                    {
+                      "id": "input-device-id",
+                      "type": "device"
+                    }
+                  ]
+                }
+              },
+              "perseoRequest": {
+                "action": {
+                  "parameters": {
+                    "attributes": [
+                      {
+                        "name": "result2",
+                        "value": "not-so-much"
+                      }
+                    ],
+                    "id": "output-device-id",
+                    "isPattern": false,
+                    "type": "virtual"
+                  },
+                  "template": "", "mirror": false,
+                  "type": "update"
+                },
+                "name": "rule_6a666fff_bfb128_3",
+                "text": "select *, \"rule_6a666fff_bfb128_3\" as ruleName, ev.attr1? as attr1 from pattern [every ev = iotEvent(cast(subscriptionId?, String) = \"123457\")]"
+              }
+            },
             ];
-            expect(result.length).equal(2);
+            expect(result.length).equal(3);
             expect(result[0].subscription).to.deep.equal(expected[0].subscription);
             expect(result[1].subscription).to.deep.equal(expected[1].subscription);
+            expect(result[2].subscription).to.deep.equal(expected[2].subscription);
 
             let perseoRequest = translator.generatePerseoRequest(12345, 0, result[0].originalRequest);
             expect(perseoRequest).not.equal(undefined);
@@ -186,6 +230,10 @@ function execute() {
             perseoRequest = translator.generatePerseoRequest(123456, 0, result[1].originalRequest);
             expect(perseoRequest).not.equal(undefined);
             expect(perseoRequest).to.deep.equal(expected[1].perseoRequest);
+
+            perseoRequest = translator.generatePerseoRequest(123457, 0, result[2].originalRequest);
+            expect(perseoRequest).not.equal(undefined);
+            expect(perseoRequest).to.deep.equal(expected[2].perseoRequest);
             done();
           } catch (error) {
             done(error);
@@ -511,8 +559,110 @@ function execute() {
           }
         });
       });
-    });
 
+
+      it('should generate all request correctly with self-created variable references', function(done) {
+        var mashup = fs.readFile(__dirname+ '/2-template-flow.json', 'utf8', function(err, data) {
+          try {
+            let expected = {
+              "subscription": {
+                "description": "Subscription for input-device-id",
+                "notification": {
+                  "http": {
+                    "url": "http://perseo-fe:9090/noticesv2"
+                  }
+                },
+                "subject": {
+                  "entities": [
+                    {
+                      "id": "input-device-id",
+                      "type": "device"
+                    }
+                  ]
+                }
+              },
+              "perseoRequest": {
+                "action": {
+                  "parameters": {
+                    "headers" : "",
+                    "method" : "POST",
+                    "url": "http://172.18.0.1:8081/device/attrs"
+                  },
+                  "template": "Valor subiu para ${a}", "mirror": false,
+                  "type": "post"
+                },
+                "name": "rule_f77ff6a8_86454_1",
+                "text": "select *, \"rule_f77ff6a8_86454_1\" as ruleName, ev.a? as a from pattern [every ev = iotEvent(cast(subscriptionId?, String) = \"12345\")]"
+              }
+            };
+            let flow = JSON.parse(data);
+            let result = translator.translateMashup(flow);
+            expect(result.length).equal(1);
+            expect(result[0].subscription).to.deep.equal(expected.subscription);
+
+            let perseoRequest = translator.generatePerseoRequest(12345, 0, result[0].originalRequest);
+            expect(perseoRequest).not.equal(undefined);
+            expect(perseoRequest).to.deep.equal(expected.perseoRequest);
+
+            done();
+          } catch (error) {
+            done(error);
+          }
+        });
+      });
+
+
+      it('should generate an email request with self-created variable references', function(done) {
+        var mashup = fs.readFile(__dirname+ '/3-template-flow.json', 'utf8', function(err, data) {
+          try {
+            let expected = {
+              "subscription": {
+                "description": "Subscription for input-device-id",
+                "notification": {
+                  "http": {
+                    "url": "http://perseo-fe:9090/noticesv2"
+                  }
+                },
+                "subject": {
+                  "entities": [
+                    {
+                      "id": "input-device-id",
+                      "type": "device"
+                    }
+                  ]
+                }
+              },
+              "perseoRequest": {
+                "action": {
+                  "parameters": {
+                    "from": "from-mail@mail.com",
+                    "smtp": "smtp-server",
+                    "subject": "Value update",
+                    "to": "to-mail@mail.com"
+                  },
+                  "template" : "Value went up to ${a}", "mirror": false,
+                  "type": "email"
+                },
+                "name": "rule_f77ff6a8_86454_1",
+                "text": "select *, \"rule_f77ff6a8_86454_1\" as ruleName, ev.a? as a from pattern [every ev = iotEvent(cast(subscriptionId?, String) = \"12345\")]"
+              }
+            };
+            let flow = JSON.parse(data);
+            let result = translator.translateMashup(flow);
+            expect(result.length).equal(1);
+            expect(result[0].subscription).to.deep.equal(expected.subscription);
+
+            let perseoRequest = translator.generatePerseoRequest(12345, 0, result[0].originalRequest);
+            expect(perseoRequest).not.equal(undefined);
+            expect(perseoRequest).to.deep.equal(expected.perseoRequest);
+
+            done();
+          } catch (error) {
+            done(error);
+          }
+        });
+      });
+    });
 
     describe('Basic email flow with change node', function() {
       it('should generate all request correctly', function(done) {
@@ -958,11 +1108,6 @@ function execute() {
         });
       });
     });
-
-
-
-
-
   });
 }
 

@@ -1,0 +1,87 @@
+[
+  {
+    "id": "f77ff6a8.86454",
+    "type": "tab",
+    "label": "Flow 1"
+  },
+  {
+    "id": "af3b0202.96d708",
+    "type": "device out",
+    "z": "f77ff6a8.86454",
+    "name": "",
+    "device": "{\"id\":\"input-device-id\",\"type\":\"device\"}",
+    "_device_id": "input-device-id",
+    "_device_label": "d1",
+    "_device_type": "device",
+    "x": 130.16665649414062,
+    "y": 251.49996948242188,
+    "wires": [
+      [
+        "e6e7edfb.0c0218"
+      ]
+    ]
+  },
+  {
+    "id": "e6e7edfb.0c0218",
+    "type": "change",
+    "z": "f77ff6a8.86454",
+    "name": "",
+    "rules": [
+      {
+        "t": "set",
+        "p": "output.status",
+        "pt": "msg",
+        "to": "went up",
+        "tot": "str"
+      }
+    ],
+    "action": "",
+    "property": "",
+    "from": "",
+    "to": "",
+    "reg": false,
+    "x": 614.1666870117188,
+    "y": 190.1666717529297,
+    "wires": [
+      [
+        "6a1a3d31.7e3e74"
+      ]
+    ]
+  },
+  {
+    "id": "6a1a3d31.7e3e74",
+    "type": "template",
+    "z": "f77ff6a8.86454",
+    "name": "",
+    "field": "output.msg",
+    "fieldType": "msg",
+    "format": "handlebars",
+    "syntax": "mustache",
+    "template": "Value {{output.status}} to {{payload.a}}",
+    "output": "str",
+    "x": 870.1666259765625,
+    "y": 203.16665649414062,
+    "wires": [
+      [
+        "884c428b.818c88"
+      ]
+    ]
+  },
+  {
+    "id": "884c428b.818c88",
+    "type": "e-mail",
+    "z": "fae42bf5.aaa46",
+    "server": "smtp-server",
+    "port": "465",
+    "secure": true,
+    "name": "",
+    "dname": "",
+    "to": "to-mail@mail.com",
+    "from": "from-mail@mail.com",
+    "subject": "Value update",
+    "body": "output.msg",
+    "x": 1109.8332977294922,
+    "y": 209.33335876464844,
+    "wires": []
+}
+]
