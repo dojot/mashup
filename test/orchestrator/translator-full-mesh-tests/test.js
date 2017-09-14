@@ -213,8 +213,8 @@ function execute() {
                   "template": "", "mirror": false,
                   "type": "update"
                 },
-                "name": "rule_6a666fff_bfb128_3",
-                "text": "select *, \"rule_6a666fff_bfb128_3\" as ruleName, ev.attr1? as attr1 from pattern [every ev = iotEvent(cast(subscriptionId?, String) = \"123457\")]"
+                "name": "rule_ad42e337_a4e128_3",
+                "text": "select *, \"rule_ad42e337_a4e128_3\" as ruleName, ev.attr1? as attr1 from pattern [every ev = iotEvent(cast(subscriptionId?, String) = \"123457\")]"
               }
             },
             ];
@@ -591,8 +591,8 @@ function execute() {
                   "template": "Valor subiu para ${a}", "mirror": false,
                   "type": "post"
                 },
-                "name": "rule_f77ff6a8_86454_1",
-                "text": "select *, \"rule_f77ff6a8_86454_1\" as ruleName, ev.a? as a from pattern [every ev = iotEvent(cast(subscriptionId?, String) = \"12345\")]"
+                "name": "rule_af3b0202_96d708_1",
+                "text": "select *, \"rule_af3b0202_96d708_1\" as ruleName, ev.a? as a from pattern [every ev = iotEvent(cast(subscriptionId?, String) = \"12345\")]"
               }
             };
             let flow = JSON.parse(data);
@@ -644,8 +644,8 @@ function execute() {
                   "template" : "", "mirror": false,
                   "type": "email"
                 },
-                "name": "rule_f77ff6a8_86454_1",
-                "text": "select *, \"rule_f77ff6a8_86454_1\" as ruleName, ev.a? as a from pattern [every ev = iotEvent(cast(subscriptionId?, String) = \"12345\")]"
+                "name": "rule_af3b0202_96d708_1",
+                "text": "select *, \"rule_af3b0202_96d708_1\" as ruleName, ev.a? as a from pattern [every ev = iotEvent(cast(subscriptionId?, String) = \"12345\")]"
               }
             };
             let flow = JSON.parse(data);
