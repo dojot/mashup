@@ -36,6 +36,20 @@ function isValidGeoOperator(op) {
  * @param {Request} request
  */
 function addNegatedFixedEventCondition(node, request) {
+  let ret = {
+    'status' : 'ok',
+    'code': 0
+  }
+  // Sanity checks
+  for (let i = 0; i < arguments.length; i++) {
+    if (arguments[i] == undefined || arguments[i] === null) {
+      ret.status = 'invalid parameter';
+      ret.code = -1;
+      return ret;
+    }
+  }
+  // End of sanity checks
+
   for (let ruleIx = 0; ruleIx < node.rules.length; ruleIx++) {
     let ruleOperation = node.rules[ruleIx].t;
     let ruleValue = node.rules[ruleIx].v;
@@ -51,17 +65,37 @@ function addNegatedFixedEventCondition(node, request) {
           ruleType = node.rules[ruleIx].v2t;
           addFixedEventCondition(node, 'gte', ruleValue, ruleType, request);
           break;
-        case 'else':
-          // This is this node!
-          break;
         default:
           addFixedEventCondition(node, orchtypes.NodeRed.NegatedLogicalOperators[ruleOperation], ruleValue, ruleType, request);
       }
+    } else {
+      if (ruleOperation in orchtypes.NodeRed.LogicalOperators) {
+        ret.status = 'operator has no negated form';
+      } else {
+        ret.code = -1;
+        ret.status = 'invalid operator'
+      }
     }
   }
+
+  return ret;
 }
 
 function addEventCondition(node, ruleOperation, ruleValue, ruleType, request, eventConditionArray) {
+  let ret = {
+    'status' : 'ok',
+    'code': 0
+  }
+  // Sanity checks
+  for (let i = 0; i < arguments.length; i++) {
+    if (arguments[i] == undefined || arguments[i] === null) {
+      ret.status = 'invalid parameter';
+      ret.code = -1;
+      return ret;
+    }
+  }
+  // End of sanity checks
+
   if (ruleOperation in orchtypes.NodeRed.LogicalOperators) {
     let nodeProperty = tools.trimProperty(node.property, '.');
     tools.addUniqueToArray(request.variables, nodeProperty);
@@ -69,61 +103,104 @@ function addEventCondition(node, ruleOperation, ruleValue, ruleType, request, ev
     eventConditionArray.push({'q' : nodeProperty + ' ' + orchtypes.NodeRed.LogicalOperators[ruleOperation] + ' ' + ruleValue });
   } else if (isValidGeoOperator(ruleOperation)) {
     // Sanity checks
-    if (ruleType == undefined || ruleValue == undefined || (ruleValue != undefined && ruleValue.length == 0)) {
-      throw {retCode: 400, msg:'empty georeference node'}
-    }
-
-    if (ruleType == orchtypes.NodeRed.GeoFenceMode.POLYLINE) {
-      // For now, georeferenced tests uses only one attribute.
-      let expression = {
-        'georel': ruleOperation,
-        'coords': '',
-        'geometry': ''
-      };
-      expression.geometry = orchtypes.OrionTypes.GeoFenceMode.POLYGON;
-      expression.coords = '';
-      for (let i = 0; i < ruleValue.length; i++) {
-        let point = ruleValue[i];
-        expression.coords += point.latitude + ',' + point.longitude + ';';
+    if (ruleValue.length == 0) {
+      ret.status = 'empty georeference node';
+      ret.code = -1;
+    } else {
+      if (ruleType == orchtypes.NodeRed.GeoFenceMode.POLYLINE) {
+        // For now, georeferenced tests uses only one attribute.
+        let expression = {
+          'georel': ruleOperation,
+          'coords': '',
+          'geometry': ''
+        };
+        expression.geometry = orchtypes.OrionTypes.GeoFenceMode.POLYGON;
+        expression.coords = '';
+        for (let i = 0; i < ruleValue.length; i++) {
+          let point = ruleValue[i];
+          expression.coords += point.latitude + ',' + point.longitude + ';';
+        }
+        // Closing the polygon
+        expression.coords += ruleValue[0].latitude + ',' + ruleValue[0].longitude;
+        eventConditionArray.push(expression);
+      } else {
+        ret.status = 'invalid geofence mode';
+        ret.code = -1;
       }
-      // Closing the polygon
-      expression.coords += ruleValue[0].latitude + ',' + ruleValue[0].longitude;
-      eventConditionArray.push(expression);
     }
+  } else {
+    ret.status = 'invalid operator';
+    ret.code = -1;
   }
+  return ret;
 }
 
 
 function addFixedEventCondition(node, ruleOperation, ruleValue, ruleType, request) {
-  addEventCondition(node, ruleOperation, ruleValue, ruleType, request, request.pattern.fixedEventConditions);
+  return addEventCondition(node, ruleOperation, ruleValue, ruleType, request, request.pattern.fixedEventConditions);
 }
 
 function addFirstEventCondition(node, ruleOperation, ruleValue, ruleType, request) {
-  addEventCondition(node, ruleOperation, ruleValue, ruleType, request, request.pattern.firstEventConditions);
+  return addEventCondition(node, ruleOperation, ruleValue, ruleType, request, request.pattern.firstEventConditions);
 }
 
 function addSecondEventCondition(node, ruleOperation, ruleValue, ruleType, request) {
-  addEventCondition(node, ruleOperation, ruleValue, ruleType, request, request.pattern.secondEventConditions);
+  return addEventCondition(node, ruleOperation, ruleValue, ruleType, request, request.pattern.secondEventConditions);
 }
 
-function extractFurtherNodes(objects, node, outputIx, request, requestList) {
+function extractFurtherNodes(objects, node, outputIx, request, extractDataFromNodeFn) {
+
+  if (extractDataFromNodeFn == undefined) {
+    extractDataFromNodeFn = extractDataFromNode;
+  }
+
+  let ret = {
+    'code': 0,
+    'status': 'ok',
+    'requestList': []
+  }
+
+  for (let i = 0; i < arguments.length; i++) {
+    if ((arguments[i] == null) || (arguments[i] == undefined)) {
+      ret.code = -1;
+      ret.status = 'invalid parameter';
+      return ret;
+    }
+  }
+
   if (node.wires[outputIx].length == 0) {
-    requestList.push(request);
+    // This is the last node.
+    ret.requestList.push(request);
   } else {
     for (let wire = 0; wire < node.wires[outputIx].length; wire++) {
       let requestClone = tools.cloneSimpleObject(request);
       let nextNode = objects[node.wires[outputIx][wire]];
-      let result = extractDataFromNode(objects, nextNode, requestClone);
-      requestList = requestList.concat(result);
+      let result = extractDataFromNodeFn(objects, nextNode, requestClone);
+      ret.requestList = ret.requestList.concat(result.requestList);
     }
   }
-  return requestList;
+  return ret;
 }
 
 function extractDataFromNode(objects, node, request) {
-  let requestList = [];
-  switch (node.type) {
+  let ret = {
+    'code': 0,
+    'status': 'ok',
+    'requestList': []
+  }
 
+  let tempRet;
+
+  function analyzeReturn() {
+    if (tempRet.code === 0) {
+      ret.requestList = ret.requestList.concat(tempRet.requestList);
+    } else {
+      ret.code = -1;
+      ret.status += tempRet.status;
+    }
+  }
+
+  switch (node.type) {
     //
     // INPUT NODES
     //
@@ -131,7 +208,8 @@ function extractDataFromNode(objects, node, request) {
       let requestClone = tools.cloneSimpleObject(request);
       requestClone.inputDevice.type = node._device_type;
       requestClone.inputDevice.id = node._device_id;
-      requestList = extractFurtherNodes(objects, node, 0, requestClone, requestList);
+      tempRet = extractFurtherNodes(objects, node, 0, requestClone);
+      analyzeReturn();
       break;
     }
 
@@ -159,7 +237,8 @@ function extractDataFromNode(objects, node, request) {
             default:
               addFixedEventCondition(node, ruleOperation, ruleValue, ruleType, requestClone);
           }
-          requestList = extractFurtherNodes(objects, node, ruleIx, requestClone, requestList);
+          tempRet = extractFurtherNodes(objects, node, ruleIx, requestClone);
+          analyzeReturn();
         }
       }
       break;
@@ -180,7 +259,8 @@ function extractDataFromNode(objects, node, request) {
             addSecondEventCondition(node, 'lt', ruleValue, ruleType, requestClone);
           break;
         }
-        requestList = extractFurtherNodes(objects, node, ruleIx, requestClone, requestList);
+        tempRet = extractFurtherNodes(objects, node, ruleIx, requestClone);
+        analyzeReturn();
       }
       break;
     }
@@ -203,7 +283,8 @@ function extractDataFromNode(objects, node, request) {
         addSecondEventCondition(node, orchtypes.OrionTypes.GeoFenceOperator.DISJOINT, ruleValue, ruleType, request);
         break;
       }
-      requestList = extractFurtherNodes(objects, node, 0, request, requestList);
+      tempRet = extractFurtherNodes(objects, node, 0, request);
+      analyzeReturn();
       break;
     }
 
@@ -224,7 +305,8 @@ function extractDataFromNode(objects, node, request) {
         }
       }
 
-      requestList = extractFurtherNodes(objects, node, 0, request, requestList);
+      tempRet = extractFurtherNodes(objects, node, 0, request);
+      analyzeReturn();
       break;
     }
     case orchtypes.NodeRed.NodeType.TEMPLATE : {
@@ -234,7 +316,8 @@ function extractDataFromNode(objects, node, request) {
       // Referenced variable
       tools.objectify(request.internalVariables, path, node.template);
 
-      requestList = extractFurtherNodes(objects, node, 0, request, requestList);
+      tempRet = extractFurtherNodes(objects, node, 0, request);
+      analyzeReturn();
       break;
     }
 
@@ -250,7 +333,7 @@ function extractDataFromNode(objects, node, request) {
         'isPattern' : false,
         'attributes' : node.attrs
       }
-      requestList.push(request);
+      ret.requestList.push(request);
       break;
     }
 
@@ -270,7 +353,7 @@ function extractDataFromNode(objects, node, request) {
       if (request.action.parameters.method == 'use') {
         request.action.parameters.method = '{{method}}'
       }
-      requestList.push(request);
+      ret.requestList.push(request);
       break;
 
     case orchtypes.NodeRed.NodeType.EMAIL:
@@ -283,17 +366,17 @@ function extractDataFromNode(objects, node, request) {
         'smtp' : node.server
       };
       request.action.template = node.body;
-      requestList.push(request);
+      ret.requestList.push(request);
       break;
 
     case orchtypes.NodeRed.NodeType.HISTORY:
       request.action.notificationEndpoint = config.cygnus.url + "/notify";
 
-      requestList.push(request);
+      ret.requestList.push(request);
 
       break;
   }
-  return requestList;
+  return ret;
 }
 
 /**
@@ -517,8 +600,6 @@ function transformToPerseoRequest(request) {
   return perseoRule;
 }
 
-
-
 function generatePerseoRequest(subscriptionId, subscriptionOrder, originalRequest) {
   switch (subscriptionOrder) {
     case 0:
@@ -566,10 +647,10 @@ function translateMashup(mashupJson) {
       let emptyRequest = tools.cloneSimpleObject(orchtypes.requestTemplate);
       let requests = extractDataFromNode(objects, objects[id], emptyRequest, objects[id].device);
       // Name all requests
-      for (let i = 0; i < requests.length; i++) {
-        requests[i].name = 'rule_' + id.replace('.', '_') + '_' + (i + 1);
+      for (let i = 0; i < requests.requestList.length; i++) {
+        requests.requestList[i].name = 'rule_' + id.replace('.', '_') + '_' + (i + 1);
       }
-      let tempResults = transformToOrionSubscriptions(requests);
+      let tempResults = transformToOrionSubscriptions(requests.requestList);
       orionSubscriptions = orionSubscriptions.concat(tempResults);
     }
   }
@@ -580,6 +661,7 @@ function translateMashup(mashupJson) {
   return orionSubscriptions;
 }
 
+exports.isValidGeoOperator = isValidGeoOperator;
 exports.addNegatedFixedEventCondition = addNegatedFixedEventCondition;
 exports.addEventCondition = addEventCondition;
 exports.addFixedEventCondition = addFixedEventCondition;

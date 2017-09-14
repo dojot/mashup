@@ -91,8 +91,8 @@ function execute() {
         expected.request.inputDevice.type = 'device';
         expected.request.inputDevice.id = 'abcd';
         result = translator.extractDataFromNode(objects, node, request);
-        expect(result.length).equal(1);
-        expect(result[0]).to.deep.equal(expected.request);
+        expect(result.requestList.length).equal(1);
+        expect(result.requestList[0]).to.deep.equal(expected.request);
 
         done();
       });
@@ -192,16 +192,16 @@ function execute() {
 
         reset();
         result = translator.extractDataFromNode(objects, node, request);
-        expect(result.length).equal(2);
+        expect(result.requestList.length).equal(2);
         expected.request.pattern.fixedEventConditions = [{'q': 'TestedVariable == abcdef'}];
         expected.request.inputDevice.attributes = ['TestedVariable'];
         expected.request.variables = ['TestedVariable'];
-        expect(result[0]).to.deep.equal(expected.request);
+        expect(result.requestList[0]).to.deep.equal(expected.request);
 
         expected.request.pattern.fixedEventConditions = [{'q': 'TestedVariable == 123456'}];
         expected.request.inputDevice.attributes = ['TestedVariable'];
         expected.request.variables = ['TestedVariable'];
-        expect(result[1]).to.deep.equal(expected.request);
+        expect(result.requestList[1]).to.deep.equal(expected.request);
 
         done();
       });
@@ -301,19 +301,19 @@ function execute() {
 
         reset();
         result = translator.extractDataFromNode(objects, node, request);
-        expect(result.length).equal(2);
+        expect(result.requestList.length).equal(2);
 
         expected.request.pattern.firstEventConditions = [{'q': 'attr1 < 100'}];
         expected.request.pattern.secondEventConditions = [{'q': 'attr1 >= 100'}];
         expected.request.inputDevice.attributes = ['attr1'];
         expected.request.variables = ['attr1'];
-        expect(result[0]).to.deep.equal(expected.request);
+        expect(result.requestList[0]).to.deep.equal(expected.request);
 
         expected.request.pattern.firstEventConditions = [{'q': 'attr1 >= 200'}];
         expected.request.pattern.secondEventConditions = [{'q': 'attr1 < 200'}];
         expected.request.inputDevice.attributes = ['attr1'];
         expected.request.variables = ['attr1'];
-        expect(result[1]).to.deep.equal(expected.request);
+        expect(result.requestList[1]).to.deep.equal(expected.request);
         done();
       });
     });
@@ -403,32 +403,32 @@ function execute() {
 
         reset();
         result = translator.extractDataFromNode(objects, node, request);
-        expect(result.length).equal(1);
+        expect(result.requestList.length).equal(1);
 
         expected.request.pattern.fixedEventConditions = [{
           'georel' : 'coveredBy',
           'geometry' : 'polygon',
           'coords' : '0,0;1,0;1,1;0,1;0,0'
         }];
-        expect(result[0]).to.deep.equal(expected.request);
+        expect(result.requestList[0]).to.deep.equal(expected.request);
 
 
         reset();
         node.filter = 'outside';
         result = translator.extractDataFromNode(objects, node, request);
-        expect(result.length).equal(1);
+        expect(result.requestList.length).equal(1);
 
         expected.request.pattern.fixedEventConditions = [{
           'georel' : 'disjoint',
           'geometry' : 'polygon',
           'coords' : '0,0;1,0;1,1;0,1;0,0'
         }];
-        expect(result[0]).to.deep.equal(expected.request);
+        expect(result.requestList[0]).to.deep.equal(expected.request);
 
         reset();
         node.filter = 'enters';
         result = translator.extractDataFromNode(objects, node, request);
-        expect(result.length).equal(1);
+        expect(result.requestList.length).equal(1);
 
         expected.request.pattern.firstEventConditions = [{
           'georel' : 'disjoint',
@@ -440,12 +440,12 @@ function execute() {
           'geometry' : 'polygon',
           'coords' : '0,0;1,0;1,1;0,1;0,0'
         }];
-        expect(result[0]).to.deep.equal(expected.request);
+        expect(result.requestList[0]).to.deep.equal(expected.request);
 
         reset();
         node.filter = 'exits';
         result = translator.extractDataFromNode(objects, node, request);
-        expect(result.length).equal(1);
+        expect(result.requestList.length).equal(1);
 
         expected.request.pattern.firstEventConditions = [{
           'georel' : 'coveredBy',
@@ -457,7 +457,7 @@ function execute() {
           'geometry' : 'polygon',
           'coords' : '0,0;1,0;1,1;0,1;0,0'
         }];
-        expect(result[0]).to.deep.equal(expected.request);
+        expect(result.requestList[0]).to.deep.equal(expected.request);
 
         done();
       });
@@ -562,14 +562,14 @@ function execute() {
 
         reset();
         result = translator.extractDataFromNode(objects, node, request);
-        expect(result.length).equal(1);
+        expect(result.requestList.length).equal(1);
         expected.request.internalVariables = {
           'output' : {
             'attr1' : 'value-1', 'attr2' : '{{payload.var1}}'
           }
         };
 
-        expect(result[0]).to.deep.equal(expected.request);
+        expect(result.requestList[0]).to.deep.equal(expected.request);
         done();
       });
     });
@@ -657,7 +657,7 @@ function execute() {
 
         reset();
         result = translator.extractDataFromNode(objects, node, request);
-        expect(result.length).equal(1);
+        expect(result.requestList.length).equal(1);
 
         // It is expected that request.inputDevice.attributes is updated
         // with attr2 after variable substitution phase.
@@ -668,7 +668,7 @@ function execute() {
           }
         }
 
-        expect(result[0]).to.deep.equal(expected.request);
+        expect(result.requestList[0]).to.deep.equal(expected.request);
         done();
       });
     });
@@ -755,7 +755,7 @@ function execute() {
 
         reset();
         result = translator.extractDataFromNode(objects, node, request);
-        expect(result.length).equal(1);
+        expect(result.requestList.length).equal(1);
 
         expected.request.action.parameters = {
           'attributes' : 'output',
@@ -765,7 +765,7 @@ function execute() {
         }
         expected.request.action.type = 'update';
 
-        expect(result[0]).to.deep.equal(expected.request);
+        expect(result.requestList[0]).to.deep.equal(expected.request);
         done();
       });
     });
@@ -856,7 +856,7 @@ function execute() {
 
         reset();
         result = translator.extractDataFromNode(objects, node, request);
-        expect(result.length).equal(1);
+        expect(result.requestList.length).equal(1);
 
         expected.request.action.parameters = {
           'to' : 'to@email.com',
@@ -866,7 +866,7 @@ function execute() {
         }
         expected.request.action.template = 'emailBody';
         expected.request.action.type = 'email';
-        expect(result[0]).to.deep.equal(expected.request);
+        expect(result.requestList[0]).to.deep.equal(expected.request);
         done();
       });
     });
@@ -949,9 +949,9 @@ function execute() {
 
       reset();
       result = translator.extractDataFromNode(objects, node, request);
-      expect(result.length).equal(1);
+      expect(result.requestList.length).equal(1);
 
-      expect(result[0]).to.deep.equal(expected.request);
+      expect(result.requestList[0]).to.deep.equal(expected.request);
       done();
     });
   });
