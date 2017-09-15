@@ -862,11 +862,10 @@ function execute() {
           'to' : 'to@email.com',
           'from' : 'from@email.com',
           'subject' : 'Message title',
-          'smtp' : 'email-server.com',
-          'body' : 'emailBody'
+          'smtp' : 'email-server.com'
         }
+        expected.request.action.template = 'emailBody';
         expected.request.action.type = 'email';
-
         expect(result[0]).to.deep.equal(expected.request);
         done();
       });
