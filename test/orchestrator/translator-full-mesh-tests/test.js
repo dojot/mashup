@@ -635,13 +635,12 @@ function execute() {
               "perseoRequest": {
                 "action": {
                   "parameters": {
-                    "body": "Value went up to ${a}",
                     "from": "from-mail@mail.com",
                     "smtp": "smtp-server",
                     "subject": "Value update",
                     "to": "to-mail@mail.com"
                   },
-                  "template" : "", "mirror": false,
+                  "template" : "Value went up to ${a}", "mirror": false,
                   "type": "email"
                 },
                 "name": "rule_af3b0202_96d708_1",
@@ -691,13 +690,12 @@ function execute() {
               "perseoRequest": {
                 "action": {
                   "parameters": {
-                    "body": "yes",
                     "from": "from@user.com",
                     "smtp": "gmail-smtp-in.l.google.com",
                     "subject": "You've got e-mail",
                     "to": "to@user.com"
                   },
-                  "template": "", "mirror": false,
+                  "template": "yes", "mirror": false,
                   "type": "email"
                 },
                 "name": "rule_ad42e337_a4e128_1",
@@ -745,13 +743,12 @@ function execute() {
               "perseoRequest": {
                 "action": {
                   "parameters": {
-                    "body": "This is an email body with ${attr1} and ${attr2}\n",
                     "from": "from@user.com",
                     "smtp": "gmail-smtp-in.l.google.com",
                     "subject": "You've got e-mail",
                     "to": "to@user.com"
                   },
-                  "template": "", "mirror": false,
+                  "template": "{\"emailBody\":\"This is an email body with ${attr1} and ${attr2}\\n\"}", "mirror": false,
                   "type": "email"
                 },
                 "name": "rule_ad42e337_a4e128_1",

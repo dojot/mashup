@@ -280,9 +280,9 @@ function extractDataFromNode(objects, node, request) {
         'to' : node.to,
         'from' : node.from,
         'subject' : node.subject,
-        'smtp' : node.server,
-        'body' : node.body
+        'smtp' : node.server
       };
+      request.action.template = node.body;
       requestList.push(request);
       break;
 
@@ -474,15 +474,19 @@ function transformToPerseoRequest(request) {
     break;
     case orchtypes.PerseoTypes.ActionType.EMAIL : {
       // Translate body
-      let emailBodyVar = request.action.parameters.body;
+      let emailBodyVar = request.action.template;
       varAccess = resolver.accessVariable(request.internalVariables, tools.tokenize(emailBodyVar, '.'));
       if (varAccess.result !== 'ok') {
         throw "failure";
       }
       let emailBody = varAccess.data;
+      if (typeof emailBody === 'object') {
+        emailBody = JSON.stringify(emailBody);
+      }
+
       let resolvedVariables = resolver.resolveVariables(request.internalVariables, emailBody, specialVars);
       perseoRule.action.parameters = request.action.parameters;
-      perseoRule.action.parameters.body = resolvedVariables.data;
+      perseoRule.action.template = resolvedVariables.data;
       for (let i = 0; i < specialVars.used.length; i++){
         tools.addUniqueToArray(request.variables, specialVars.used[i]);
       }
