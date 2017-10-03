@@ -112,6 +112,11 @@ function resolveVariables(obj, text, specialVars, varTracking) {
   if (varTracking === undefined) {
     varTracking = {};
   }
+  // Adding quotes to moustache variables.
+  // Starting quotes
+  // Closing quotes
+  ret.data = ret.data.replace(/:( *(\n)*)*(?!\"|\'){{/g, ':"{{');
+  ret.data = ret.data.replace(/}}( *(\n)*)*(?!\"|\')(?=,|})/g, '}}"');
 
   if (typeof text === 'string') {
     let beginTagIndex = ret.data.search('{{');
