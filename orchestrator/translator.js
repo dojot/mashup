@@ -385,7 +385,7 @@ function transformToPerseoRequest(request) {
     case orchtypes.PerseoTypes.ActionType.UPDATE: {
       // Only attributes should be updated.
       let attributesVar = request.action.parameters.attributes;
-      varAccess = resolver.accessVariable(request.internalVariables, tools.tokenize(attributesVar, '.'));
+      varAccess = resolver.accessVariable(request.internalVariables, tools.tokenize(attributesVar, '.'), specialVars);
       if (varAccess.result !== 'ok') {
         throw "failure";
       }
@@ -401,6 +401,7 @@ function transformToPerseoRequest(request) {
       }
       perseoRule.action.parameters = request.action.parameters;
       perseoRule.action.parameters.attributes = [];
+      // This must be a json, so let's add some quotes.
       attributes = JSON.parse(resolvedVariables.data);
       for (let varName in attributes) {
         if (attributes.hasOwnProperty(varName)){

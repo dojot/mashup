@@ -112,30 +112,20 @@ function resolveVariables(obj, text, specialVars, varTracking) {
   if (varTracking === undefined) {
     varTracking = {};
   }
-  // Adding quotes to moustache variables.
-  // Starting quotes
-  // Closing quotes
-  ret.data = ret.data.replace(/:( *(\n)*)*(?!\"|\'){{/g, ':"{{');
-  ret.data = ret.data.replace(/}}( *(\n)*)*(?!\"|\')(?=,|})/g, '}}"');
 
   if (typeof text === 'string') {
-    let beginTagIndex = ret.data.search('{{');
-    let endTagIndex = ret.data.search('}}');
-    while ((beginTagIndex >= 0) && (endTagIndex >= 0) && (beginTagIndex < endTagIndex)) {
-      // Remove '{{' from variable name
-      beginTagIndex += 2;
-      let tag = ret.data.slice(beginTagIndex, endTagIndex);
-      let expansion = expandVariable(obj, tag, specialVars, varTracking);
+    let tokens = /\"?\{{2}(.+?)\}{2}\"?/g.exec(ret.data);
+
+    while (tokens != null) {
+      let expansion = expandVariable(obj, tokens[1], specialVars, varTracking);
       if (expansion.result === 'ok') {
-        // Skip '{{' and '}}'
-        ret.data = ret.data.slice(0, beginTagIndex - 2) + expansion.data + ret.data.slice(endTagIndex + 2);
-        beginTagIndex = ret.data.search('{{');
-        endTagIndex = ret.data.search('}}');
+        ret.data = ret.data.replace(new RegExp('\{{2}(' + tokens[1] + ')\}{2}', 'g'), expansion.data);
       } else {
         ret.result = expansion.result;
         ret.data = expansion.data;
         break;
       }
+      tokens = /\"?\{{2}(.+?)\}{2}\"?/g.exec(ret.data);
     }
   }
   return ret;
