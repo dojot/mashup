@@ -469,15 +469,16 @@ module.exports = function(grunt) {
 
     grunt.registerTask('default',
         'Builds editor content then runs code style checks and unit tests on all components',
-        ['test-orchestrator', 'test-core']);
+        ['test-orchestrator']);
+        // ['build','test-orchestrator', 'test-core','test-editor','test-nodes']);
 
     grunt.registerTask('test-orchestrator',
         'Runs code style check and unit tests on orchestrator runtime code',
         ['jshint:orchestrator', 'simplemocha:orchestrator']);
 
-    grunt.registerTask('test-core',
-        'Runs code style check and unit tests on core runtime code',
-        ['jshint:core','simplemocha:core']);
+    // grunt.registerTask('test-core',
+    //     'Runs code style check and unit tests on core runtime code',
+    //     ['jshint:core','simplemocha:core']);
 
     // grunt.registerTask('test-editor',
     //     'Runs code style check on editor code',
