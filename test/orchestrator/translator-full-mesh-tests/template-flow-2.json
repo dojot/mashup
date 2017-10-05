@@ -31,7 +31,7 @@
         "t": "set",
         "p": "output.status",
         "pt": "msg",
-        "to": "subiu",
+        "to": "went up",
         "tot": "str"
       }
     ],

@@ -588,7 +588,7 @@ function execute() {
                     "method" : "POST",
                     "url": "http://172.18.0.1:8081/device/attrs"
                   },
-                  "template": "Valor subiu para ${a}", "mirror": false,
+                  "template": "Value went up to ${a}", "mirror": false,
                   "type": "post"
                 },
                 "name": "rule_af3b0202_96d708_1",
