@@ -261,35 +261,61 @@ function processPutFlow(httpRequest, httpResponse) {
 
   let flowData = httpRequest.body;
   var flowHeader = extractFiwareHeaders(httpRequest.headers);
+  let backupFlow;
 
-  orchestrator.deleteFlow(flowHeader, httpRequest.params.flowid, function(err, nRemoved) {
-  if (err) {
-    console.log('Failed to remove flow: ' + err);
-    httpResponse.status(500).send({msg: 'failed to remove flow'});
-    throw err;
-  }
-  if (nRemoved === 0) {
-    console.log('Flow is not known');
-    httpResponse.status(404).send({msg: 'given flow is unknown'});
-    return;
+  let addFlowFunc = function () {
+    try {
+      orchestrator.addFlow(flowHeader, flowData, function (err) {
+        console.log('Flow addition ended.');
+        if (err) {
+          console.log('Failed to add flow: ' + err);
+          httpResponse.status(500).send({ msg: 'failed to insert data' });
+          throw err;
+        }
+        console.log('Flow was updated: ' + flowData);
+        httpResponse.status(200).send({ msg: 'flow updated', flow: flowData });
+        return;
+      });
+    } catch (err) {
+      if (backupFlow != undefined) {
+        // Putting back previous flow
+        orchestrator.addFlow(flowHeader, backupFlow, function (err) { });
+      }
+      httpResponse.status(err.retCode).send({ msg: 'error while adding flow: ' + err.msg });
+    }
   }
 
-  try {
-    orchestrator.addFlow(flowHeader, flowData, function(err) {
+  let deleteFlowFunc = function() {
+    orchestrator.deleteFlow(flowHeader, httpRequest.params.flowid, function(err, nRemoved) {
     if (err) {
-      console.log('Failed to add flow: ' + err);
-      httpResponse.status(500).send({msg: 'failed to insert data'});
+      console.log('Failed to remove flow: ' + err);
+      httpResponse.status(500).send({msg: 'failed to remove flow'});
       throw err;
     }
-    console.log('Flow was updated: ' + flowData);
-    httpResponse.status(200).send({msg: 'flow updated', flow: flowData});
-    return;
-  });
-  } catch (err) {
-    httpResponse.status(err.retCode).send({msg: 'error while adding flow: ' + err.msg});
+    if (nRemoved === 0) {
+      console.log('Flow is not known');
+      httpResponse.status(404).send({msg: 'given flow is unknown'});
+      return;
+    }
+    console.log('Starting flow addition.');
+    addFlowFunc();
+    console.log('Flow addition started.');
+    });
   }
 
-  });
+  orchestratorDb.findOne({service: flowHeader['Fiware-Service'], id: httpRequest.params.flowid}, {perseoRules: 0, orionSubscriptionsV2: 0}, function(err, flow) {
+    if (err) {
+      console.log('An error occurred: ' + err);
+      httpResponse.status(500).send({msg: 'failed to retrieve data'});
+    } else {
+      backupFlow = flow;
+    }
+    console.log('Starting flow deletion.');
+    deleteFlowFunc();
+    console.log('Flow deletion started.');
+  })
+
+
 }
 
 function init() {
