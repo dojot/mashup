@@ -385,7 +385,7 @@ function transformToPerseoRequest(request) {
     case orchtypes.PerseoTypes.ActionType.UPDATE: {
       // Only attributes should be updated.
       let attributesVar = request.action.parameters.attributes;
-      varAccess = resolver.accessVariable(request.internalVariables, tools.tokenize(attributesVar, '.'));
+      varAccess = resolver.accessVariable(request.internalVariables, tools.tokenize(attributesVar, '.'), specialVars);
       if (varAccess.result !== 'ok') {
         throw "failure";
       }
@@ -401,6 +401,7 @@ function transformToPerseoRequest(request) {
       }
       perseoRule.action.parameters = request.action.parameters;
       perseoRule.action.parameters.attributes = [];
+      // This must be a json, so let's add some quotes.
       attributes = JSON.parse(resolvedVariables.data);
       for (let varName in attributes) {
         if (attributes.hasOwnProperty(varName)){
@@ -430,8 +431,18 @@ function transformToPerseoRequest(request) {
           throw "failure";
         }
         let postBody = varAccess.data;
+
+        if (typeof postBody === 'object') {
+          postBody = JSON.stringify(postBody);
+        }
+
         let resolvedVariables = resolver.resolveVariables(request.internalVariables, postBody, specialVars);
-        perseoRule.action.template = resolvedVariables.data;
+
+        if (typeof resolvedVariables.data === 'object') {
+          perseoRule.action.template = '\'' + JSON.stringify(resolvedVariables.data) + '\'';
+        } else {
+          perseoRule.action.template = resolvedVariables.data;
+        }
         for (let i = 0; i < specialVars.used.length; i++){
           tools.addUniqueToArray(request.variables, specialVars.used[i]);
         }
@@ -486,7 +497,13 @@ function transformToPerseoRequest(request) {
 
       let resolvedVariables = resolver.resolveVariables(request.internalVariables, emailBody, specialVars);
       perseoRule.action.parameters = request.action.parameters;
-      perseoRule.action.template = resolvedVariables.data;
+
+      if (typeof resolvedVariables.data === 'object') {
+        perseoRule.action.template = '\'' + JSON.stringify(resolvedVariables.data) + '\'';
+      } else {
+        perseoRule.action.template = resolvedVariables.data;
+      }
+
       for (let i = 0; i < specialVars.used.length; i++){
         tools.addUniqueToArray(request.variables, specialVars.used[i]);
       }
