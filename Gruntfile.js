@@ -45,7 +45,7 @@ module.exports = function(grunt) {
         mocha_istanbul: {
             options: {
                 globals: ['expect'],
-                timeout: 3000,
+                timeout: 10000,
                 ignoreLeaks: false,
                 ui: 'bdd',
                 reportFormats: ['lcov'],
@@ -469,37 +469,38 @@ module.exports = function(grunt) {
 
     grunt.registerTask('default',
         'Builds editor content then runs code style checks and unit tests on all components',
-        ['build','test-orchestrator', 'test-core','test-editor','test-nodes']);
+        ['test-orchestrator']);
+        // ['build','test-orchestrator', 'test-core','test-editor','test-nodes']);
 
     grunt.registerTask('test-orchestrator',
         'Runs code style check and unit tests on orchestrator runtime code',
         ['jshint:orchestrator', 'simplemocha:orchestrator']);
 
-    grunt.registerTask('test-core',
-        'Runs code style check and unit tests on core runtime code',
-        ['jshint:core','simplemocha:core']);
+    // grunt.registerTask('test-core',
+    //     'Runs code style check and unit tests on core runtime code',
+    //     ['jshint:core','simplemocha:core']);
 
-    grunt.registerTask('test-editor',
-        'Runs code style check on editor code',
-        ['jshint:editor']);
+    // grunt.registerTask('test-editor',
+    //     'Runs code style check on editor code',
+    //     ['jshint:editor']);
 
-    grunt.registerTask('test-nodes',
-        'Runs unit tests on core nodes',
-        ['simplemocha:nodes']);
+    // grunt.registerTask('test-nodes',
+    //     'Runs unit tests on core nodes',
+    //     ['simplemocha:nodes']);
 
-    grunt.registerTask('build',
-        'Builds editor content',
-        ['clean:build','jsonlint','concat:build','concat:vendor','copy:build','uglify:build','sass:build','attachCopyright']);
+    // grunt.registerTask('build',
+    //     'Builds editor content',
+    //     ['clean:build','jsonlint','concat:build','concat:vendor','copy:build','uglify:build','sass:build','attachCopyright']);
 
-    grunt.registerTask('dev',
-        'Developer mode: run node-red, watch for source changes and build/restart',
-        ['build','setDevEnv','concurrent:dev']);
+    // grunt.registerTask('dev',
+    //     'Developer mode: run node-red, watch for source changes and build/restart',
+    //     ['build','setDevEnv','concurrent:dev']);
 
-    grunt.registerTask('release',
-        'Create distribution zip file',
-        ['build','clean:release','copy:release','chmod:release','compress:release']);
+    // grunt.registerTask('release',
+    //     'Create distribution zip file',
+    //     ['build','clean:release','copy:release','chmod:release','compress:release']);
 
-    grunt.registerTask('coverage',
-        'Run Istanbul code test coverage task',
-        ['build','mocha_istanbul']);
+    // grunt.registerTask('coverage',
+    //     'Run Istanbul code test coverage task',
+    //     ['build','mocha_istanbul']);
 };

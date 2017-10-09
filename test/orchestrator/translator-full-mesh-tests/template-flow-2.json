@@ -31,7 +31,7 @@
         "t": "set",
         "p": "output.status",
         "pt": "msg",
-        "to": "subiu",
+        "to": "went up",
         "tot": "str"
       }
     ],
@@ -57,7 +57,7 @@
     "fieldType": "msg",
     "format": "handlebars",
     "syntax": "mustache",
-    "template": "Valor {{output.status}} para {{payload.a}}",
+    "template": "Value {{output.status}} to {{payload.a}}",
     "output": "str",
     "x": 870.1666259765625,
     "y": 203.16665649414062,

@@ -12,7 +12,7 @@ function execute() {
   describe('Full tests', function() {
     describe('Switch-change flow', function() {
       it('should give no errors for simple switch-change', function(done) {
-        var mashup = fs.readFile(__dirname+ '/1-switch-change-flow.json', 'utf8', function(err, data) {
+        var mashup = fs.readFile(__dirname+ '/switch-change-flow-1.json', 'utf8', function(err, data) {
           try {
             let flow = JSON.parse(data);
             let result = translator.translateMashup(flow);
@@ -77,7 +77,7 @@ function execute() {
 
 
       it('should give no errors with switch node with multiple rules', function(done) {
-        var mashup = fs.readFile(__dirname+ '/2-switch-change-flow.json', 'utf8', function(err, data) {
+        var mashup = fs.readFile(__dirname+ '/switch-change-flow-2.json', 'utf8', function(err, data) {
           try {
             let flow = JSON.parse(data);
             let result = translator.translateMashup(flow);
@@ -244,7 +244,7 @@ function execute() {
 
     describe('Basic change flow', function() {
       it('should generate all request correctly', function(done) {
-        var mashup = fs.readFile(__dirname+ '/1-change-flow.json', 'utf8', function(err, data) {
+        var mashup = fs.readFile(__dirname+ '/change-flow-1.json', 'utf8', function(err, data) {
           try {
             let expected = {
               "subscription": {
@@ -303,7 +303,7 @@ function execute() {
 
     describe('Basic edgedetection flow', function() {
       it('should generate all request correctly', function(done) {
-        var mashup = fs.readFile(__dirname+ '/1-edgedetection-flow.json', 'utf8', function(err, data) {
+        var mashup = fs.readFile(__dirname+ '/edgedetection-flow-1.json', 'utf8', function(err, data) {
           try {
             let flow = JSON.parse(data);
             let result = translator.translateMashup(flow);
@@ -402,7 +402,7 @@ function execute() {
 
     describe('Edgedetection combined with a switch flow', function() {
       it('should generate all request correctly', function(done) {
-        var mashup = fs.readFile(__dirname+ '/1-edgedetection-switch-flow.json', 'utf8', function(err, data) {
+        var mashup = fs.readFile(__dirname+ '/edgedetection-switch-flow-1.json', 'utf8', function(err, data) {
           try {
             let flow = JSON.parse(data);
             let result = translator.translateMashup(flow);
@@ -501,7 +501,7 @@ function execute() {
 
     describe('Basic template flow', function() {
       it('should generate all request correctly', function(done) {
-        var mashup = fs.readFile(__dirname+ '/1-template-flow.json', 'utf8', function(err, data) {
+        var mashup = fs.readFile(__dirname+ '/template-flow-1.json', 'utf8', function(err, data) {
           try {
             let expected = {
               "subscription": {
@@ -562,7 +562,7 @@ function execute() {
 
 
       it('should generate all request correctly with self-created variable references', function(done) {
-        var mashup = fs.readFile(__dirname+ '/2-template-flow.json', 'utf8', function(err, data) {
+        var mashup = fs.readFile(__dirname+ '/template-flow-2.json', 'utf8', function(err, data) {
           try {
             let expected = {
               "subscription": {
@@ -588,7 +588,7 @@ function execute() {
                     "method" : "POST",
                     "url": "http://172.18.0.1:8081/device/attrs"
                   },
-                  "template": "Valor subiu para ${a}", "mirror": false,
+                  "template": "Value went up to ${a}", "mirror": false,
                   "type": "post"
                 },
                 "name": "rule_af3b0202_96d708_1",
@@ -613,7 +613,7 @@ function execute() {
 
 
       it('should generate an email request with self-created variable references', function(done) {
-        var mashup = fs.readFile(__dirname+ '/3-template-flow.json', 'utf8', function(err, data) {
+        var mashup = fs.readFile(__dirname+ '/template-flow-3.json', 'utf8', function(err, data) {
           try {
             let expected = {
               "subscription": {
@@ -666,7 +666,7 @@ function execute() {
 
     describe('Basic email flow with change node', function() {
       it('should generate all request correctly', function(done) {
-        var mashup = fs.readFile(__dirname+ '/1-email-flow.json', 'utf8', function(err, data) {
+        var mashup = fs.readFile(__dirname+ '/email-flow-1.json', 'utf8', function(err, data) {
           try {
             let flow = JSON.parse(data);
             let result = translator.translateMashup(flow);
@@ -719,7 +719,7 @@ function execute() {
 
     describe('Basic email flow with template node', function() {
       it('should generate all request correctly', function(done) {
-        var mashup = fs.readFile(__dirname+ '/2-email-flow.json', 'utf8', function(err, data) {
+        var mashup = fs.readFile(__dirname+ '/email-flow-2.json', 'utf8', function(err, data) {
           try {
             let flow = JSON.parse(data);
             let result = translator.translateMashup(flow);
@@ -772,7 +772,7 @@ function execute() {
 
     describe('Basic post flow with template node', function() {
       it('should generate all request correctly', function(done) {
-        var mashup = fs.readFile(__dirname+ '/1-post-flow.json', 'utf8', function(err, data) {
+        var mashup = fs.readFile(__dirname+ '/post-flow-1.json', 'utf8', function(err, data) {
           try {
             let flow = JSON.parse(data);
             let result = translator.translateMashup(flow);
@@ -828,7 +828,7 @@ function execute() {
 
     describe('Basic post flow with change node', function() {
       it('should generate all request correctly', function(done) {
-        var mashup = fs.readFile(__dirname+ '/2-post-flow.json', 'utf8', function(err, data) {
+        var mashup = fs.readFile(__dirname+ '/post-flow-2.json', 'utf8', function(err, data) {
           try {
             let flow = JSON.parse(data);
             let result = translator.translateMashup(flow);
@@ -884,7 +884,7 @@ function execute() {
 
     describe('Basic post flow with change node setting url externally', function() {
       it('should generate all request correctly', function(done) {
-        var mashup = fs.readFile(__dirname+ '/3-post-flow.json', 'utf8', function(err, data) {
+        var mashup = fs.readFile(__dirname+ '/post-flow-3.json', 'utf8', function(err, data) {
           try {
             let flow = JSON.parse(data);
             let result = translator.translateMashup(flow);
@@ -941,7 +941,7 @@ function execute() {
 
     describe('Basic post flow with change node setting url externally in a change node', function() {
       it('should generate all request correctly', function(done) {
-        var mashup = fs.readFile(__dirname+ '/4-post-flow.json', 'utf8', function(err, data) {
+        var mashup = fs.readFile(__dirname+ '/post-flow-4.json', 'utf8', function(err, data) {
           try {
             let flow = JSON.parse(data);
             let result = translator.translateMashup(flow);
@@ -998,7 +998,7 @@ function execute() {
 
     describe('Basic post flow with change node setting url and HTTP method externally in a change node', function() {
       it('should generate all request correctly', function(done) {
-        var mashup = fs.readFile(__dirname+ '/5-post-flow.json', 'utf8', function(err, data) {
+        var mashup = fs.readFile(__dirname+ '/post-flow-5.json', 'utf8', function(err, data) {
           try {
             let flow = JSON.parse(data);
             let result = translator.translateMashup(flow);
@@ -1055,7 +1055,7 @@ function execute() {
 
     describe('Basic post flow with change node setting url and HTTP method externally in a change node', function() {
       it('should generate all request correctly', function(done) {
-        var mashup = fs.readFile(__dirname+ '/6-post-flow.json', 'utf8', function(err, data) {
+        var mashup = fs.readFile(__dirname+ '/post-flow-6.json', 'utf8', function(err, data) {
           try {
             let flow = JSON.parse(data);
             let result = translator.translateMashup(flow);
