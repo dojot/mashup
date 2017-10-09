@@ -27,6 +27,14 @@ function isValidGeoOperator(op) {
   return false;
 }
 
+function buildErrorMessage(errorMsg, node) {
+  let ret = { error : errorMsg};
+  if (node != null) {
+    ret.nodeid = node.id;
+  }
+  return ret;
+}
+
 /**
  * Add a composed condition that negates all other conditions described in 'node'
  * parameter
@@ -37,15 +45,15 @@ function isValidGeoOperator(op) {
  */
 function addNegatedFixedEventCondition(node, request) {
   let ret = {
-    'status' : 'ok',
-    'code': 0
+    'msg' : 'ok',
+    'retCode': 0
   }
   // Sanity checks
   for (let i = 0; i < arguments.length; i++) {
     if (arguments[i] == undefined || arguments[i] === null) {
-      ret.status = 'invalid parameter';
-      ret.code = -1;
-      return ret;
+      ret.msg = buildErrorMessage('invalid parameter', node);
+      ret.retCode = 400;
+      throw ret;
     }
   }
   // End of sanity checks
@@ -70,28 +78,27 @@ function addNegatedFixedEventCondition(node, request) {
       }
     } else {
       if (ruleOperation in orchtypes.NodeRed.LogicalOperators) {
-        ret.status = 'operator has no negated form';
+        ret.msg = 'operator has no negated form';
       } else {
-        ret.code = -1;
-        ret.status = 'invalid operator'
+        ret.retCode = 400;
+        ret.msg = buildErrorMessage('invalid operator', node);
+        throw ret;
       }
     }
   }
-
-  return ret;
 }
 
 function addEventCondition(node, ruleOperation, ruleValue, ruleType, request, eventConditionArray) {
   let ret = {
-    'status' : 'ok',
-    'code': 0
+    'msg' : 'ok',
+    'retCode': 0
   }
   // Sanity checks
   for (let i = 0; i < arguments.length; i++) {
     if (arguments[i] == undefined || arguments[i] === null) {
-      ret.status = 'invalid parameter';
-      ret.code = -1;
-      return ret;
+      ret.msg = buildErrorMessage('invalid parameter', node);
+      ret.retCode = 400;
+      throw ret;
     }
   }
   // End of sanity checks
@@ -104,8 +111,9 @@ function addEventCondition(node, ruleOperation, ruleValue, ruleType, request, ev
   } else if (isValidGeoOperator(ruleOperation)) {
     // Sanity checks
     if (ruleValue.length == 0) {
-      ret.status = 'empty georeference node';
-      ret.code = -1;
+      ret.msg = buildErrorMessage('empty georeference node', node);
+      ret.retCode = 400;
+      throw ret;
     } else {
       if (ruleType == orchtypes.NodeRed.GeoFenceMode.POLYLINE) {
         // For now, georeferenced tests uses only one attribute.
@@ -124,28 +132,29 @@ function addEventCondition(node, ruleOperation, ruleValue, ruleType, request, ev
         expression.coords += ruleValue[0].latitude + ',' + ruleValue[0].longitude;
         eventConditionArray.push(expression);
       } else {
-        ret.status = 'invalid geofence mode';
-        ret.code = -1;
+        ret.msg = buildErrorMessage('invalid geofence mode', node);
+        ret.retCode = 400;
+        throw ret;
       }
     }
   } else {
-    ret.status = 'invalid operator';
-    ret.code = -1;
+    ret.msg = buildErrorMessage('invalid operator', node);
+    ret.retCode = 400;
+    throw ret;
   }
-  return ret;
 }
 
 
 function addFixedEventCondition(node, ruleOperation, ruleValue, ruleType, request) {
-  return addEventCondition(node, ruleOperation, ruleValue, ruleType, request, request.pattern.fixedEventConditions);
+  addEventCondition(node, ruleOperation, ruleValue, ruleType, request, request.pattern.fixedEventConditions);
 }
 
 function addFirstEventCondition(node, ruleOperation, ruleValue, ruleType, request) {
-  return addEventCondition(node, ruleOperation, ruleValue, ruleType, request, request.pattern.firstEventConditions);
+  addEventCondition(node, ruleOperation, ruleValue, ruleType, request, request.pattern.firstEventConditions);
 }
 
 function addSecondEventCondition(node, ruleOperation, ruleValue, ruleType, request) {
-  return addEventCondition(node, ruleOperation, ruleValue, ruleType, request, request.pattern.secondEventConditions);
+  addEventCondition(node, ruleOperation, ruleValue, ruleType, request, request.pattern.secondEventConditions);
 }
 
 function extractFurtherNodes(objects, node, outputIx, request, extractDataFromNodeFn) {
@@ -155,16 +164,17 @@ function extractFurtherNodes(objects, node, outputIx, request, extractDataFromNo
   }
 
   let ret = {
-    'code': 0,
-    'status': 'ok',
+    'retCode': 0,
+    'msg': 'ok',
     'requestList': []
   }
 
   for (let i = 0; i < arguments.length; i++) {
     if ((arguments[i] == null) || (arguments[i] == undefined)) {
-      ret.code = -1;
-      ret.status = 'invalid parameter';
-      return ret;
+      ret.retCode = 400;
+      ret.msg = buildErrorMessage('invalid parameter', node);
+      delete ret.requestList;
+      throw ret;
     }
   }
 
@@ -184,19 +194,22 @@ function extractFurtherNodes(objects, node, outputIx, request, extractDataFromNo
 
 function extractDataFromNode(objects, node, request) {
   let ret = {
-    'code': 0,
-    'status': 'ok',
+    'retCode': 0,
+    'msg': 'ok',
     'requestList': []
   }
 
   let tempRet;
 
   function analyzeReturn() {
-    if (tempRet.code === 0) {
+    if (tempRet.retCode === 0) {
       ret.requestList = ret.requestList.concat(tempRet.requestList);
     } else {
-      ret.code = -1;
-      ret.status += tempRet.status;
+      ret.retCode = 400;
+      ret.msg.error += tempRet.msg.error + ', ';
+      ret.msg.nodeid += tempRet.msg.nodeid + ', ';
+      delete ret.requestList;
+      throw ret;
     }
   }
 

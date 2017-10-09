@@ -56,7 +56,8 @@ function execute() {
         beforeEach(function() {
           eventConditionArray = [];
           node = {
-            'property' : 'payload.InputVariable'
+            'property' : 'payload.InputVariable',
+            'id' : '12345'
           };
           ruleValue = 'test';
           ruleType = 'string';
@@ -75,16 +76,18 @@ function execute() {
               }
             },
             ret : {
-              'code' : 0,
-              'status' : 'ok'
+              'retCode' : 0,
+              'msg' :{
+                'error' : '',
+                'nodeid' : ''
+              }
             }
           };
         });
 
         it('should process "eq" operator with no errors', function(done) {
           expected.eventConditionArray[0] = {'q': 'InputVariable == test'};
-          ret = translator.addEventCondition(node, 'eq', ruleValue, ruleType, request, eventConditionArray);
-          expect(ret).to.deep.equal(expected.ret);
+          translator.addEventCondition(node, 'eq', ruleValue, ruleType, request, eventConditionArray);
           expect(eventConditionArray).to.deep.equal(expected.eventConditionArray);
           expect(request).to.deep.equal(expected.request);
           done();
@@ -92,8 +95,7 @@ function execute() {
 
         it('should process "neq" operator with no errors', function(done) {
           expected.eventConditionArray[0] = {'q': 'InputVariable != test'};
-          ret = translator.addEventCondition(node, 'neq', ruleValue, ruleType, request, eventConditionArray);
-          expect(ret).to.deep.equal(expected.ret);
+          translator.addEventCondition(node, 'neq', ruleValue, ruleType, request, eventConditionArray);
           expect(eventConditionArray).to.deep.equal(expected.eventConditionArray);
           expect(request).to.deep.equal(expected.request);
           done();
@@ -101,8 +103,7 @@ function execute() {
 
         it('should process "lt" operator with no errors', function(done) {
           expected.eventConditionArray[0] = {'q': 'InputVariable < test'};
-          ret = translator.addEventCondition(node, 'lt', ruleValue, ruleType, request, eventConditionArray);
-          expect(ret).to.deep.equal(expected.ret);
+          translator.addEventCondition(node, 'lt', ruleValue, ruleType, request, eventConditionArray);
           expect(eventConditionArray).to.deep.equal(expected.eventConditionArray);
           expect(request).to.deep.equal(expected.request);
           done();
@@ -110,8 +111,7 @@ function execute() {
 
         it('should process "lte" operator with no errors', function(done) {
           expected.eventConditionArray[0] = {'q': 'InputVariable <= test'};
-          ret = translator.addEventCondition(node, 'lte', ruleValue, ruleType, request, eventConditionArray);
-          expect(ret).to.deep.equal(expected.ret);
+          translator.addEventCondition(node, 'lte', ruleValue, ruleType, request, eventConditionArray);
           expect(eventConditionArray).to.deep.equal(expected.eventConditionArray);
           expect(request).to.deep.equal(expected.request);
           done();
@@ -119,8 +119,7 @@ function execute() {
 
         it('should process "gt" operator with no errors', function(done) {
           expected.eventConditionArray[0] = {'q': 'InputVariable > test'};
-          ret = translator.addEventCondition(node, 'gt', ruleValue, ruleType, request, eventConditionArray);
-          expect(ret).to.deep.equal(expected.ret);
+          translator.addEventCondition(node, 'gt', ruleValue, ruleType, request, eventConditionArray);
           expect(eventConditionArray).to.deep.equal(expected.eventConditionArray);
           expect(request).to.deep.equal(expected.request);
           done();
@@ -128,8 +127,7 @@ function execute() {
 
         it('should process "gte" operator with no errors', function(done) {
           expected.eventConditionArray[0] = {'q': 'InputVariable >= test'};
-          ret = translator.addEventCondition(node, 'gte', ruleValue, ruleType, request, eventConditionArray);
-          expect(ret).to.deep.equal(expected.ret);
+          translator.addEventCondition(node, 'gte', ruleValue, ruleType, request, eventConditionArray);
           expect(eventConditionArray).to.deep.equal(expected.eventConditionArray);
           expect(request).to.deep.equal(expected.request);
           done();
@@ -137,54 +135,120 @@ function execute() {
 
         it('should process "cont" operator with no errors', function(done) {
           expected.eventConditionArray[0] = {'q': 'InputVariable ~= test'};
-          ret = translator.addEventCondition(node, 'cont', ruleValue, ruleType, request, eventConditionArray);
-          expect(ret).to.deep.equal(expected.ret);
+          translator.addEventCondition(node, 'cont', ruleValue, ruleType, request, eventConditionArray);
           expect(eventConditionArray).to.deep.equal(expected.eventConditionArray);
           expect(request).to.deep.equal(expected.request);
           done();
         });
 
         it ('should return an error if an invalid operator is used', function(done) {
-          expected.ret.code = -1;
-          expected.ret.status = 'invalid operator';
-          ret = translator.addEventCondition(node, 'xyz', ruleValue, ruleType, request, eventConditionArray);
-          expect(ret).to.deep.equal(expected.ret);
+          expected.ret.retCode = 400;
+          expected.ret.msg = {
+            error: 'invalid operator',
+            nodeid: '12345'
+          }
+          try {
+            translator.addEventCondition(node, 'xyz', ruleValue, ruleType, request, eventConditionArray);
+          } catch (ret) {
+            expect(ret).to.deep.equal(expected.ret);
+          }
           done();
         });
 
         it ('should return an error if any input parameter is null', function(done) {
-          expected.ret.code = -1;
-          expected.ret.status = 'invalid parameter';
-          ret = translator.addEventCondition(null, 'eq', ruleValue, ruleType, request, eventConditionArray);
-          expect(ret).to.deep.equal(expected.ret);
-          ret = translator.addEventCondition(node, null, ruleValue, ruleType, request, eventConditionArray);
-          expect(ret).to.deep.equal(expected.ret);
-          ret = translator.addEventCondition(node, 'eq', null, ruleType, request, eventConditionArray);
-          expect(ret).to.deep.equal(expected.ret);
-          ret = translator.addEventCondition(node, 'eq', ruleValue, null, request, eventConditionArray);
-          expect(ret).to.deep.equal(expected.ret);
-          ret = translator.addEventCondition(node, 'eq', ruleValue, ruleType, null, eventConditionArray);
-          expect(ret).to.deep.equal(expected.ret);
-          ret = translator.addEventCondition(node, 'eq', ruleValue, ruleType, request, null);
-          expect(ret).to.deep.equal(expected.ret);
+          expected.ret.retCode = 400;
+          expected.ret.msg = {
+            error: 'invalid parameter'
+          }
+          try {
+            translator.addEventCondition(null, 'eq', ruleValue, ruleType, request, eventConditionArray);
+          } catch (ret) {
+            expect(ret).to.deep.equal(expected.ret);
+          }
+
+          expected.ret.msg = {
+            error: 'invalid parameter',
+            nodeid: '12345'
+          }
+          try {
+            translator.addEventCondition(node, null, ruleValue, ruleType, request, eventConditionArray);
+          } catch (ret) {
+            expect(ret).to.deep.equal(expected.ret);
+          }
+
+          try {
+            translator.addEventCondition(node, 'eq', null, ruleType, request, eventConditionArray);
+          } catch (ret) {
+            expect(ret).to.deep.equal(expected.ret);
+          }
+
+          try {
+            translator.addEventCondition(node, 'eq', ruleValue, null, request, eventConditionArray);
+          } catch (ret) {
+            expect(ret).to.deep.equal(expected.ret);
+          }
+
+          try {
+            translator.addEventCondition(node, 'eq', ruleValue, ruleType, null, eventConditionArray);
+          } catch (ret) {
+            expect(ret).to.deep.equal(expected.ret);
+          }
+
+          try {
+            translator.addEventCondition(node, 'eq', ruleValue, ruleType, request, null);
+          } catch (ret) {
+            expect(ret).to.deep.equal(expected.ret);
+          }
+
           done();
         });
 
         it ('should return an error if any input parameter is undefined', function(done) {
-          expected.ret.code = -1;
-          expected.ret.status = 'invalid parameter';
-          ret = translator.addEventCondition(undefined, 'eq', ruleValue, ruleType, request, eventConditionArray);
-          expect(ret).to.deep.equal(expected.ret);
-          ret = translator.addEventCondition(node, undefined, ruleValue, ruleType, request, eventConditionArray);
-          expect(ret).to.deep.equal(expected.ret);
-          ret = translator.addEventCondition(node, 'eq', undefined, ruleType, request, eventConditionArray);
-          expect(ret).to.deep.equal(expected.ret);
-          ret = translator.addEventCondition(node, 'eq', ruleValue, undefined, request, eventConditionArray);
-          expect(ret).to.deep.equal(expected.ret);
-          ret = translator.addEventCondition(node, 'eq', ruleValue, ruleType, undefined, eventConditionArray);
-          expect(ret).to.deep.equal(expected.ret);
-          ret = translator.addEventCondition(node, 'eq', ruleValue, ruleType, request, undefined);
-          expect(ret).to.deep.equal(expected.ret);
+          expected.ret.retCode = 400;
+          expected.ret.msg = {
+            error: 'invalid parameter'
+          }
+          try {
+            translator.addEventCondition(undefined, 'eq', ruleValue, ruleType, request, eventConditionArray);
+          } catch (ret) {
+            expect(ret).to.deep.equal(expected.ret);
+          }
+
+
+          expected.ret.msg = {
+            error: 'invalid parameter',
+            nodeid: '12345'
+          }
+          try {
+            translator.addEventCondition(node, undefined, ruleValue, ruleType, request, eventConditionArray);
+          } catch (ret) {
+            expect(ret).to.deep.equal(expected.ret);
+          }
+
+          try {
+            translator.addEventCondition(node, 'eq', undefined, ruleType, request, eventConditionArray);
+          } catch (ret) {
+            expect(ret).to.deep.equal(expected.ret);
+          }
+
+          try {
+            translator.addEventCondition(node, 'eq', ruleValue, undefined, request, eventConditionArray);
+          } catch (ret) {
+            expect(ret).to.deep.equal(expected.ret);
+          }
+
+          try {
+            translator.addEventCondition(node, 'eq', ruleValue, ruleType, undefined, eventConditionArray);
+          } catch (ret) {
+            expect(ret).to.deep.equal(expected.ret);
+          }
+
+          try {
+            translator.addEventCondition(node, 'eq', ruleValue, ruleType, request, undefined);
+          } catch (ret) {
+            expect(ret).to.deep.equal(expected.ret);
+          }
+
           done();
         });
       });
@@ -193,7 +257,8 @@ function execute() {
         beforeEach(function() {
           eventConditionArray = [];
           node = {
-            'property' : 'payload.InputVariable'
+            'property' : 'payload.InputVariable',
+            'id' : '12345'
           };
           ruleValue = [
             { 'latitude' : 0, 'longitude' : 0},
@@ -216,41 +281,54 @@ function execute() {
               }
             ],
             ret : {
-              'code' : 0,
-              'status' : 'ok'
+              'retCode' : 0,
+              'msg' : 'ok'
             }
           }
         });
 
         it('should process the "coveredBy" operator properly', function(done) {
           expected.eventConditionArray[0].georel = 'coveredBy'
-          ret = translator.addEventCondition(node, 'coveredBy', ruleValue, ruleType, request, eventConditionArray);
-          expect(ret).to.deep.equal(expected.ret);
+          translator.addEventCondition(node, 'coveredBy', ruleValue, ruleType, request, eventConditionArray);
           expect(eventConditionArray).to.deep.equal(expected.eventConditionArray);
           done();
         });
 
         it('should process the "disjoint" operator properly', function(done) {
           expected.eventConditionArray[0].georel = 'disjoint'
-          ret = translator.addEventCondition(node, 'disjoint', ruleValue, ruleType, request, eventConditionArray);
-          expect(ret).to.deep.equal(expected.ret);
+          translator.addEventCondition(node, 'disjoint', ruleValue, ruleType, request, eventConditionArray);
           expect(eventConditionArray).to.deep.equal(expected.eventConditionArray);
           done();
         });
 
         it('should return an error if this node has no data', function(done) {
-          expected.ret.code = -1;
-          expected.ret.status = 'empty georeference node';
-          ret = translator.addEventCondition(node, 'coveredBy', [], ruleType, request, eventConditionArray);
-          expect(ret).to.deep.equal(expected.ret);
+          expected.ret.retCode = 400;
+          expected.ret.msg = {
+            error: 'empty georeference node',
+            nodeid: '12345'
+          }
+
+          try {
+            translator.addEventCondition(node, 'coveredBy', [], ruleType, request, eventConditionArray);
+          } catch (ret) {
+            expect(ret).to.deep.equal(expected.ret);
+          }
+
           done();
         });
 
         it('should return an error if rule type is not supported', function(done) {
-          expected.ret.status = 'invalid geofence mode';
-          expected.ret.code = -1;
-          ret = translator.addEventCondition(node, 'coveredBy', ruleValue, 'strange-geofence-mode', request, eventConditionArray);
-          expect(ret).to.deep.equal(expected.ret);
+          expected.ret.retCode = 400;
+          expected.ret.msg = {
+            error: 'invalid geofence mode',
+            nodeid: '12345'
+          }
+          try {
+            translator.addEventCondition(node, 'coveredBy', ruleValue, 'strange-geofence-mode', request, eventConditionArray);
+          } catch (ret) {
+            expect(ret).to.deep.equal(expected.ret);
+          }
+
           done();
         });
       });
@@ -267,7 +345,8 @@ function execute() {
         beforeEach(function() {
           node = {
             'property' : 'payload.InputVariable',
-            'rules' : [ { 't' : '', 'v': 'test', 'vt' : 'string', 'v2' : 'test', 'v2t' : 'string'}]
+            'rules' : [ { 't' : '', 'v': 'test', 'vt' : 'string', 'v2' : 'test', 'v2t' : 'string'}],
+            'id' : '12345'
           };
           ruleValue = 'test';
           ruleType = 'string';
@@ -291,8 +370,8 @@ function execute() {
               }
             },
             ret : {
-              'code' : 0,
-              'status' : 'ok'
+              'retCode' : 0,
+              'msg' : 'ok'
             }
           }
         });
@@ -300,8 +379,7 @@ function execute() {
         it('should process the "eq" with no errors', function(done) {
           expected.request.pattern.fixedEventConditions[0] = {'q': 'InputVariable != test'};
           node.rules[0].t = 'eq';
-          ret = translator.addNegatedFixedEventCondition(node, request);
-          expect(ret).to.deep.equal(expected.ret);
+          translator.addNegatedFixedEventCondition(node, request);
           expect(request).to.deep.equal(expected.request);
           done();
         });
@@ -309,8 +387,7 @@ function execute() {
         it('should process the "neq" with no errors', function(done) {
           expected.request.pattern.fixedEventConditions[0] = {'q': 'InputVariable == test'};
           node.rules[0].t = 'neq';
-          ret = translator.addNegatedFixedEventCondition(node, request);
-          expect(ret).to.deep.equal(expected.ret);
+          translator.addNegatedFixedEventCondition(node, request);
           expect(request).to.deep.equal(expected.request);
           done();
         });
@@ -318,8 +395,7 @@ function execute() {
         it('should process the "lt" with no errors', function(done) {
           expected.request.pattern.fixedEventConditions[0] = {'q': 'InputVariable >= test'};
           node.rules[0].t = 'lt';
-          ret = translator.addNegatedFixedEventCondition(node, request);
-          expect(ret).to.deep.equal(expected.ret);
+          translator.addNegatedFixedEventCondition(node, request);
           expect(request).to.deep.equal(expected.request);
           done();
         });
@@ -327,8 +403,7 @@ function execute() {
         it('should process the "lte" with no errors', function(done) {
           expected.request.pattern.fixedEventConditions[0] = {'q': 'InputVariable > test'};
           node.rules[0].t = 'lte';
-          ret = translator.addNegatedFixedEventCondition(node, request);
-          expect(ret).to.deep.equal(expected.ret);
+          translator.addNegatedFixedEventCondition(node, request);
           expect(request).to.deep.equal(expected.request);
           done();
         });
@@ -336,8 +411,7 @@ function execute() {
         it('should process the "gt" with no errors', function(done) {
           expected.request.pattern.fixedEventConditions[0] = {'q': 'InputVariable <= test'};
           node.rules[0].t = 'gt';
-          ret = translator.addNegatedFixedEventCondition(node, request);
-          expect(ret).to.deep.equal(expected.ret);
+          translator.addNegatedFixedEventCondition(node, request);
           expect(request).to.deep.equal(expected.request);
           done();
         });
@@ -345,8 +419,7 @@ function execute() {
         it('should process the "gte" with no errors', function(done) {
           expected.request.pattern.fixedEventConditions[0] = {'q': 'InputVariable < test'};
           node.rules[0].t = 'gte';
-          ret = translator.addNegatedFixedEventCondition(node, request);
-          expect(ret).to.deep.equal(expected.ret);
+          translator.addNegatedFixedEventCondition(node, request);
           expect(request).to.deep.equal(expected.request);
           done();
         });
@@ -357,8 +430,7 @@ function execute() {
           node.rules[0].t = 'btwn';
           node.rules[0].v2 = ruleValue;
           node.rules[0].v2t = ruleType;
-          ret = translator.addNegatedFixedEventCondition(node, request);
-          expect(ret).to.deep.equal(expected.ret);
+          translator.addNegatedFixedEventCondition(node, request);
           expect(request).to.deep.equal(expected.request);
           done();
         });
@@ -368,8 +440,7 @@ function execute() {
           expected.ret.status = 'operator has no negated form';
           expected.request.inputDevice.attributes = [];
           expected.request.variables = [];
-          ret = translator.addNegatedFixedEventCondition(node, request);
-          expect(ret).to.deep.equal(expected.ret);
+          translator.addNegatedFixedEventCondition(node, request);
           expect(request).to.deep.equal(expected.request);
           done();
         });
@@ -377,40 +448,71 @@ function execute() {
         // BETWEEN operator is not supported in this function - it is broken down into gte and lt
 
         it ('should do nothing if a logic operator with no negated form is used', function(done) {
-          expected.ret.code = 0;
+          expected.ret.retCode = 0;
           expected.ret.status = 'operator has no negated form';
           node.rules[0].t = 'cont';
-          ret = translator.addNegatedFixedEventCondition(node, request);
-          expect(ret).to.deep.equal(expected.ret);
+          translator.addNegatedFixedEventCondition(node, request);
           done();
         });
 
         it ('should return an error if an invalid operator is used', function(done) {
-          expected.ret.code = -1;
-          expected.ret.status = 'invalid operator';
+          expected.ret.retCode = 400;
+          expected.ret.msg = {
+            error: "invalid operator",
+            nodeid: '12345'
+          }
           node.rules[0].t = 'xyz';
-          ret = translator.addNegatedFixedEventCondition(node, request);
-          expect(ret).to.deep.equal(expected.ret);
+          try {
+            translator.addNegatedFixedEventCondition(node, request);
+          } catch (ret) {
+            expect(ret).to.deep.equal(expected.ret);
+          }
           done();
         });
 
         it ('should return an error if any input parameter is null', function(done) {
-          expected.ret.code = -1;
-          expected.ret.status = 'invalid parameter';
-          ret = translator.addNegatedFixedEventCondition(null, request);
-          expect(ret).to.deep.equal(expected.ret);
-          ret = translator.addNegatedFixedEventCondition(node, null);
-          expect(ret).to.deep.equal(expected.ret);
+          expected.ret.retCode = 400;
+          expected.ret.msg = {
+            error: "invalid parameter"
+          }
+          try {
+            translator.addNegatedFixedEventCondition(null, request);
+          } catch (ret) {
+            expect(ret).to.deep.equal(expected.ret);
+          }
+
+          expected.ret.msg = {
+            error: "invalid parameter",
+            nodeid: '12345'
+          }
+          try {
+            translator.addNegatedFixedEventCondition(node, null);
+          } catch (ret) {
+            expect(ret).to.deep.equal(expected.ret);
+          }
           done();
         });
 
         it ('should return an error if any input parameter is undefined', function(done) {
-          expected.ret.code = -1;
-          expected.ret.status = 'invalid parameter';
-          ret = translator.addNegatedFixedEventCondition(undefined, request);
-          expect(ret).to.deep.equal(expected.ret);
-          ret = translator.addNegatedFixedEventCondition(node, undefined);
-          expect(ret).to.deep.equal(expected.ret);
+          expected.ret.retCode = 400;
+          expected.ret.msg = {
+            error: "invalid parameter"
+          }
+          try {
+            translator.addNegatedFixedEventCondition(undefined, request);
+          } catch (ret) {
+            expect(ret).to.deep.equal(expected.ret);
+          }
+
+          expected.ret.msg = {
+            error: "invalid parameter",
+            nodeid: '12345'
+          }
+          try {
+            translator.addNegatedFixedEventCondition(node, undefined);
+          } catch (ret) {
+            expect(ret).to.deep.equal(expected.ret);
+          }
           done();
         });
       });
@@ -424,7 +526,7 @@ function execute() {
       let request;
       let requestList;
       let ret;
-      let expected;
+      let expected, expectedError;
       let extractDataFromNodeFn = translator.extractDataFromNode;
 
       beforeEach(function() {
@@ -434,19 +536,18 @@ function execute() {
           "obj3" : {},
           "obj4" : {}
         };
-        node = { "wires" : [] };
+        node = { "wires" : [], 'id': '12345'};
         outputIx = 0;
         request = { };
         requestList = [];
 
         expected = {
           'ret' : {
-            'code': 0,
-            'status': 'ok',
+            'retCode': 0,
+            'msg' : 'ok',
             'requestList': []
           }
         };
-
         extractDataFromNodeFn = sinon.stub();
       });
 
@@ -457,8 +558,7 @@ function execute() {
 
         // Only one request prototype is expected
         expected.ret.requestList.push({});
-        ret = translator.extractFurtherNodes(objects, node, outputIx, request, extractDataFromNodeFn);
-        expect(ret).to.deep.equal(expected.ret);
+        translator.extractFurtherNodes(objects, node, outputIx, request, extractDataFromNodeFn);
         expect(extractDataFromNodeFn.calledOnce);
         done();
       });
@@ -471,8 +571,7 @@ function execute() {
         // Two request prototype is expected
         expected.ret.requestList.push({});
         expected.ret.requestList.push({});
-        ret = translator.extractFurtherNodes(objects, node, outputIx, request, extractDataFromNodeFn);
-        expect(ret).to.deep.equal(expected.ret);
+        translator.extractFurtherNodes(objects, node, outputIx, request, extractDataFromNodeFn);
         done();
       });
 
@@ -485,12 +584,10 @@ function execute() {
         // One request prototype is expected per output port
         expected.ret.requestList.push({});
         outputIx = 0;
-        ret = translator.extractFurtherNodes(objects, node, outputIx, request, extractDataFromNodeFn);
-        expect(ret).to.deep.equal(expected.ret);
+        translator.extractFurtherNodes(objects, node, outputIx, request, extractDataFromNodeFn);
 
         outputIx = 1;
-        ret = translator.extractFurtherNodes(objects, node, outputIx, request, extractDataFromNodeFn);
-        expect(ret).to.deep.equal(expected.ret);
+        translator.extractFurtherNodes(objects, node, outputIx, request, extractDataFromNodeFn);
         done();
       });
 
@@ -504,12 +601,10 @@ function execute() {
         expected.ret.requestList.push({});
         expected.ret.requestList.push({});
         outputIx = 0;
-        ret = translator.extractFurtherNodes(objects, node, outputIx, request, extractDataFromNodeFn);
-        expect(ret).to.deep.equal(expected.ret);
+        translator.extractFurtherNodes(objects, node, outputIx, request, extractDataFromNodeFn);
 
         outputIx = 1;
-        ret = translator.extractFurtherNodes(objects, node, outputIx, request, extractDataFromNodeFn);
-        expect(ret).to.deep.equal(expected.ret);
+        translator.extractFurtherNodes(objects, node, outputIx, request, extractDataFromNodeFn);
         done();
       });
 
@@ -539,22 +634,38 @@ function execute() {
         extractDataFromNodeFn.returns({requestList:[{}]});
 
         expected.ret = {
-          'code': -1,
-          'status': 'invalid parameter',
-          'requestList': []
+          'retCode': 400,
+          'msg' : {
+            'error': 'invalid parameter',
+            'nodeid': '12345'
+          }
         }
 
-        ret = translator.extractFurtherNodes(null, node, outputIx, request, extractDataFromNodeFn);
-        expect(ret).to.deep.equal(expected.ret);
+        try {
+          translator.extractFurtherNodes(null, node, outputIx, request, extractDataFromNodeFn);
+        } catch (ret) {
+          expect(ret).to.deep.equal(expected.ret);
+        }
 
-        ret = translator.extractFurtherNodes(objects, null, outputIx, request, extractDataFromNodeFn);
-        expect(ret).to.deep.equal(expected.ret);
+        delete expected.ret.msg.nodeid;
+        try {
+          translator.extractFurtherNodes(objects, null, outputIx, request, extractDataFromNodeFn);
+        } catch (ret) {
+          expect(ret).to.deep.equal(expected.ret);
+        }
 
-        ret = translator.extractFurtherNodes(objects, node, null, request, extractDataFromNodeFn);
-        expect(ret).to.deep.equal(expected.ret);
+        expected.ret.msg.nodeid = '12345';
+        try {
+          translator.extractFurtherNodes(objects, node, null, request, extractDataFromNodeFn);
+        } catch (ret) {
+          expect(ret).to.deep.equal(expected.ret);
+        }
 
-        ret = translator.extractFurtherNodes(objects, node, outputIx, null, extractDataFromNodeFn);
-        expect(ret).to.deep.equal(expected.ret);
+        try {
+          translator.extractFurtherNodes(objects, node, outputIx, null, extractDataFromNodeFn);
+        } catch (ret) {
+          expect(ret).to.deep.equal(expected.ret);
+        }
 
         done();
       });
@@ -565,22 +676,38 @@ function execute() {
         extractDataFromNodeFn.returns({requestList:[{}]});
 
         expected.ret = {
-          'code': -1,
-          'status': 'invalid parameter',
-          'requestList': []
+          'retCode': 400,
+          'msg' : {
+            'error': 'invalid parameter',
+            'nodeid': '12345'
+          }
         }
 
-        ret = translator.extractFurtherNodes(undefined, node, outputIx, request, extractDataFromNodeFn);
-        expect(ret).to.deep.equal(expected.ret);
+        try {
+          translator.extractFurtherNodes(undefined, node, outputIx, request, extractDataFromNodeFn);
+        } catch (ret) {
+          expect(ret).to.deep.equal(expected.ret);
+        }
 
-        ret = translator.extractFurtherNodes(objects, undefined, outputIx, request, extractDataFromNodeFn);
-        expect(ret).to.deep.equal(expected.ret);
+        delete expected.ret.msg.nodeid;
+        try {
+          translator.extractFurtherNodes(objects, undefined, outputIx, request, extractDataFromNodeFn);
+        } catch (ret) {
+          expect(ret).to.deep.equal(expected.ret);
+        }
 
-        ret = translator.extractFurtherNodes(objects, node, undefined, request, extractDataFromNodeFn);
-        expect(ret).to.deep.equal(expected.ret);
+        expected.ret.msg.nodeid = '12345';
+        try {
+          translator.extractFurtherNodes(objects, node, undefined, request, extractDataFromNodeFn);
+        } catch (ret) {
+          expect(ret).to.deep.equal(expected.ret);
+        }
 
-        ret = translator.extractFurtherNodes(objects, node, outputIx, undefined, extractDataFromNodeFn);
-        expect(ret).to.deep.equal(expected.ret);
+        try {
+          translator.extractFurtherNodes(objects, node, outputIx, undefined, extractDataFromNodeFn);
+        } catch (ret) {
+          expect(ret).to.deep.equal(expected.ret);
+        }
 
         done();
       });

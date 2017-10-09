@@ -155,7 +155,7 @@ function processPostFlow(httpRequest, httpResponse) {
   } catch (err) {
     console.log('An error occurred: ' + err);
     console.log(util.inspect(err, {showHidden: false, depth: null}));
-    httpResponse.status(err.retCode).send({msg: 'error while adding flow: ' + err.msg});
+    httpResponse.status(err.retCode).send({msg: 'error while adding flow', details: err.msg});
   }
 }
 
@@ -281,7 +281,7 @@ function processPutFlow(httpRequest, httpResponse) {
         // Putting back previous flow
         orchestrator.addFlow(flowHeader, backupFlow, function (err) { });
       }
-      httpResponse.status(err.retCode).send({ msg: 'error while adding flow: ' + err.msg });
+      httpResponse.status(err.retCode).send({ msg: 'error while adding flow', details: err.msg});
     }
   }
 
