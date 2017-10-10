@@ -469,7 +469,7 @@ module.exports = function(grunt) {
 
     grunt.registerTask('default',
         'Builds editor content then runs code style checks and unit tests on all components',
-        ['test-orchestrator']);
+        ['build', 'test-orchestrator']);
         // ['build','test-orchestrator', 'test-core','test-editor','test-nodes']);
 
     grunt.registerTask('test-orchestrator',
@@ -488,9 +488,9 @@ module.exports = function(grunt) {
     //     'Runs unit tests on core nodes',
     //     ['simplemocha:nodes']);
 
-    // grunt.registerTask('build',
-    //     'Builds editor content',
-    //     ['clean:build','jsonlint','concat:build','concat:vendor','copy:build','uglify:build','sass:build','attachCopyright']);
+    grunt.registerTask('build',
+        'Builds editor content',
+        ['clean:build','jsonlint','concat:build','concat:vendor','copy:build','uglify:build','sass:build','attachCopyright']);
 
     // grunt.registerTask('dev',
     //     'Developer mode: run node-red, watch for source changes and build/restart',
