@@ -149,7 +149,7 @@ function addFlow(fiwareHeaders, flowData, callback) {
   // Store perseo data so that the rules can be properly removed in the future
   flowData.perseoRules = [];
 
-  console.log('Translating mashup description...');
+  console.log('Translating mashup descriptioooooooooooooooooooooooooon...');
   // Translate flow to perseo and/or orion
   let flowRequests = translator.translateMashup(flowData.flow);
   console.log('Mashup description translated.');

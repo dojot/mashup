@@ -1,0 +1,73 @@
+<script type="text/x-red" data-template-name="class out">
+  <div class="form-row">
+      <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+      <input type="text" id="node-input-name">
+  </div>
+  <div class="form-row">
+      <label for="node-input-device"><i class="fa fa-wifi"></i> Device</label>
+      <select id="node-input-device" style=""></select>
+  </div>
+  <div style="display:none">
+      <input type='text' id='node-input-device-label'/>
+  </div>
+</script>
+
+<script type="text/x-red" data-help-name="class out">
+  <p>Use data retrieved from a previously configured sensor as input to logic.</p>
+</script>
+
+<script type="text/javascript">
+   RED.nodes.registerType('class out',{
+       category: 'input',      // the palette category
+       defaults: {
+           // defines the editable properties of the node
+
+           // just the UI label displayed back to the user on the flow.
+           name: {value:"", required:false},
+           // name of the device which data is retrieved from.
+           device: {value:"", required:true},
+
+           // those are the internal types used when routing data through fiware.
+           _device_label: { value:"", required: false},
+       },
+       inputs:0,                // set the number of inputs - only 0 or 1
+       outputs:1,               // set the number of outputs - 0 to n
+       align: "left",          // align the icon
+       icon: "bridge-dash.png", // set the icon (held in icons dir below where you save the node)
+       color: "#679BF3",        // background-color
+       label: function() {
+           // sets the default label contents
+           return this.name || "device";
+       },
+       labelStyle: function() {
+           // sets the class to apply to the label
+           return this.name ? "node_label_italic" : "";
+       },
+       oneditprepare: function() {
+         var select = document.getElementById("node-input-device");
+         // this will only work from the device management interface
+         let node = this;
+         // TODO
+         // This should be changed to 'template'
+         util.GET('/device')
+            .then((list) => {
+              list.devices.map((dev) => {
+                const devType = (dev.protocol.toLowerCase() == 'virtual' ? 'virtual' : 'device');
+                select.options[select.options.length] = new Option(dev.label, JSON.stringify({'label' : dev.label}));
+              });
+              select.value = node.device;
+            })
+            .catch((error) => {
+              console.error('Failed to retrieve the list of available devices',error);
+            })
+       },
+
+       oneditsave: function() {
+         if ($('#node-input-device').val()) {
+           const deviceData = JSON.parse($('#node-input-device').val());
+           $('#node-input-device-label').val(deviceData.label);
+           this._device_label = deviceData.label;
+         }
+       }
+   });
+</script>

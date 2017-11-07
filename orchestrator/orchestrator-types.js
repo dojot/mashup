@@ -16,7 +16,8 @@ var NodeRed = {
     EMAIL: 'e-mail',
     EDGEDETECTION: 'edgedetection',
     HTTP_POST: 'http post',
-    HISTORY: 'history'
+    HISTORY: 'history',
+    INPUT_CLASS: 'class out'
   },
   LogicalOperators: {
     'eq': '==',
@@ -134,6 +135,8 @@ var requestTemplate = {
   'inputDevice': {
     'type': '',
     'id': '',
+    'typePattern': '',
+    'idPattern' : '',
     'attributes': []
   }
 };
