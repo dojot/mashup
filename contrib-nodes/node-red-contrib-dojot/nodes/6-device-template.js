@@ -4,7 +4,7 @@ module.exports = function(RED) {
     //var foo = require("foo-library");
 
     // The main node definition - most things happen in here
-    function DeviceClassNode(n) {
+    function DeviceTemplateNode(n) {
         // Create a RED node
         RED.nodes.createNode(this,n);
 
@@ -44,6 +44,6 @@ module.exports = function(RED) {
 
     // Register the node by name. This must be called before overriding any of the
     // Node functions.
-    RED.nodes.registerType("class out",DeviceClassNode);
+    RED.nodes.registerType("device template out",DeviceTemplateNode);
 
 }

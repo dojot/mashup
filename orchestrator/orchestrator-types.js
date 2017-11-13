@@ -17,7 +17,7 @@ var NodeRed = {
     EDGEDETECTION: 'edgedetection',
     HTTP_POST: 'http post',
     HISTORY: 'history',
-    INPUT_CLASS: 'class out'
+    INPUT_DEVICE_CLASS: 'device template out'
   },
   LogicalOperators: {
     'eq': '==',

@@ -14,7 +14,7 @@
       "device": "nodes/3-device.js",
       "edgedetection": "nodes/4-edgedetection.js",
       "httprequest_out": "nodes/5-httprequest_out.js",
-      "template": "nodes/6-device-class.js"
+      "template": "nodes/6-device-template.js"
     }
   }
 }

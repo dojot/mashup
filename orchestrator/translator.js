@@ -229,12 +229,12 @@ function extractDataFromNode(objects, node, request) {
       break;
     }
 
-    case orchtypes.NodeRed.NodeType.INPUT_CLASS : {
+    case orchtypes.NodeRed.NodeType.INPUT_DEVICE_TEMPLATE : {
       let requestClone = tools.cloneSimpleObject(request);
       delete requestClone.inputDevice.id;
       delete requestClone.inputDevice.type;
       // TODO This must change to the proper value.
-      requestClone.inputDevice.typePattern = '.*' + node._device_label + '.*';
+      requestClone.inputDevice.typePattern = '.*' + node._device_template_id + '.*';
       requestClone.inputDevice.idPattern = '.*';
       tempRet = extractFurtherNodes(objects, node, 0, requestClone);
       analyzeReturn();
