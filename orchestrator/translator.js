@@ -695,7 +695,7 @@ function translateMashup(mashupJson) {
   }
 
   for (var id in objects) {
-    if (objects[id].type == 'device out' || objects[id].type == 'class out') {
+    if (objects[id].type == orchtypes.NodeRed.NodeType.INPUT_DEVICE || objects[id].type == orchtypes.NodeRed.NodeType.INPUT_DEVICE_TEMPLATE) {
       let emptyRequest = tools.cloneSimpleObject(orchtypes.requestTemplate);
       let requests = extractDataFromNode(objects, objects[id], emptyRequest, objects[id].device);
       // Name all requests
