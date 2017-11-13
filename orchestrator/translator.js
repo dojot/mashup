@@ -200,6 +200,7 @@ function extractDataFromNode(objects, node, request) {
   }
 
   let tempRet;
+  console.log('Node type:' + node.type);
 
   function analyzeReturn() {
     if (tempRet.retCode === 0) {
@@ -219,8 +220,22 @@ function extractDataFromNode(objects, node, request) {
     //
     case orchtypes.NodeRed.NodeType.INPUT_DEVICE : {
       let requestClone = tools.cloneSimpleObject(request);
+      delete requestClone.inputDevice.idPattern;
+      delete requestClone.inputDevice.typePattern;
       requestClone.inputDevice.type = node._device_type;
       requestClone.inputDevice.id = node._device_id;
+      tempRet = extractFurtherNodes(objects, node, 0, requestClone);
+      analyzeReturn();
+      break;
+    }
+
+    case orchtypes.NodeRed.NodeType.INPUT_DEVICE_TEMPLATE : {
+      let requestClone = tools.cloneSimpleObject(request);
+      delete requestClone.inputDevice.id;
+      delete requestClone.inputDevice.type;
+      // TODO This must change to the proper value.
+      requestClone.inputDevice.typePattern = '.*' + node._device_template_id + '.*';
+      requestClone.inputDevice.idPattern = '.*';
       tempRet = extractFurtherNodes(objects, node, 0, requestClone);
       analyzeReturn();
       break;
@@ -417,10 +432,17 @@ function transformToOrionSubscriptions(requests) {
     let request = requests[i];
     let orionSubscription = tools.cloneSimpleObject(orchtypes.orionSubscriptionTemplate);
     orionSubscription.subscription.description = 'Subscription for ' + requests[i].inputDevice.id;
-    orionSubscription.subscription.subject.entities.push( {
-      'type' : request.inputDevice.type,
-      'id' : request.inputDevice.id
-    });
+    if (request.inputDevice.id != undefined) {
+      orionSubscription.subscription.subject.entities.push( {
+        'type' : request.inputDevice.type,
+        'id' : request.inputDevice.id
+      });
+    } else {
+      orionSubscription.subscription.subject.entities.push( {
+        'typePattern' : request.inputDevice.typePattern,
+        'idPattern' : request.inputDevice.idPattern
+      });
+    }
 
     orionSubscription.subscription.notification.http.url = request.action.notificationEndpoint;
 
@@ -673,7 +695,7 @@ function translateMashup(mashupJson) {
   }
 
   for (var id in objects) {
-    if (objects[id].type == 'device out') {
+    if (objects[id].type == orchtypes.NodeRed.NodeType.INPUT_DEVICE || objects[id].type == orchtypes.NodeRed.NodeType.INPUT_DEVICE_TEMPLATE) {
       let emptyRequest = tools.cloneSimpleObject(orchtypes.requestTemplate);
       let requests = extractDataFromNode(objects, objects[id], emptyRequest, objects[id].device);
       // Name all requests
