@@ -1,5 +1,6 @@
 /* jshint node: true */
 "use strict";
+
 var config = {};
 
 config.perseo_fe = {
@@ -12,7 +13,8 @@ config.orion = {
 }
 
 config.mongo = {
-  url: "mongodb://mongodb:27017/orchestrator"
+  url: "mongodb://mongodb:27017/orchestrator",
+  replicaSet: process.env.MONGO_REPLICA_SET
 }
 
 config.cygnus = {
