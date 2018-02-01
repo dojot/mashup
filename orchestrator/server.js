@@ -338,7 +338,11 @@ function init() {
     connectTimeoutMS: 2500,
     reconnectTries: 100,
     reconnectInterval: 2500,
-    autoReconnect: true
+    autoReconnect: true,
+  }
+
+  if (config.mongo.replicaSet) {
+    opt.replicaSet = config.mongo.replicaSet;
   }
 
   console.log('Starting orchestrator service...');
