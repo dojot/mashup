@@ -1,3 +1,16 @@
+# dojot deprecation notice
+
+As dojot's architecture evolved, it became important to allow users to add and remove nodes and
+their functionality from a deployment in runtime.
+
+Given that this component relies on configuration being done on multiple other fiware elements
+(such as orion, perseo), it was decided that it was easier to create a new service that assumed
+nodes to be horizontally scaleable but also "hot-deployable".
+
+The impleemntation for this new component may be found at [dojot/flowbroker](https://github.com/dojot/flowbroker)
+
+---
+
 # Node-RED
 
 http://nodered.org
